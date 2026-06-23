@@ -37,7 +37,7 @@ export default function Button({
     <Tag
       className={cx(
         'inline-flex select-none items-center justify-center whitespace-nowrap font-medium',
-        'transition-all duration-200 ease-smooth disabled:pointer-events-none disabled:opacity-50',
+        'transition-all duration-200 ease-smooth active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50',
         VARIANTS[variant],
         SIZES[size],
         className

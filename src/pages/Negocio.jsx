@@ -51,7 +51,7 @@ export default function Negocio() {
       {/* Mini-stats */}
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((s) => (
-          <Card key={s.label} className="px-4 py-3">
+          <Card key={s.label} hover className="px-4 py-3">
             <p className="text-2xs font-medium uppercase tracking-wide text-subtle">{s.label}</p>
             <p className={cx('mt-1 font-display text-2xl font-bold tabular', s.tone || 'text-ink')}>
               {s.value}

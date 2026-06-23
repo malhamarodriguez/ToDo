@@ -2,7 +2,7 @@ import { cx } from '../../lib/utils'
 
 export function PageContainer({ children, className }) {
   return (
-    <div className={cx('mx-auto w-full max-w-content px-4 py-6 sm:px-6 lg:px-8 lg:py-8', className)}>
+    <div className={cx('mx-auto w-full max-w-content px-4 py-6 animate-fade-in sm:px-6 lg:px-8 lg:py-8', className)}>
       {children}
     </div>
   )

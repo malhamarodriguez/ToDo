@@ -47,6 +47,7 @@ export default function Inicio() {
   const todays = tasks.filter((t) => (t.today || t.overdue) && t.status !== 'done')
   const doneToday = tasks.filter((t) => t.today && t.status === 'done')
   const pending = todays.length
+  const totalToday = todays.length + doneToday.length
 
   const onQuick = (id) => {
     if (id === 'task') return setQuickAdd(true)
@@ -82,12 +83,25 @@ export default function Inicio() {
             )}
           </span>
         </p>
+        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-line bg-surface/60 py-1 pl-2.5 pr-3 text-[13px]">
+          <span className="grid h-4 w-4 place-items-center rounded-full bg-accent/15">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+          </span>
+          <span className="text-subtle">Enfoque de hoy</span>
+          <span className="font-medium text-ink">Cerrar Alpha · activación del SaaS</span>
+        </div>
       </div>
 
       {/* Accesos rápidos */}
       <div className="mb-6 flex flex-wrap gap-2.5 animate-fade-up" style={{ animationDelay: '40ms' }}>
         {QUICK.map((q) => (
-          <Button key={q.id} variant="secondary" icon={q.icon} onClick={() => onQuick(q.id)}>
+          <Button
+            key={q.id}
+            variant="secondary"
+            icon={q.icon}
+            onClick={() => onQuick(q.id)}
+            className="transition-all hover:-translate-y-0.5 hover:border-accent/40 hover:text-accent"
+          >
             {q.label}
           </Button>
         ))}
@@ -98,28 +112,40 @@ export default function Inicio() {
         {/* Tareas de hoy — protagonista */}
         <div className="lg:col-span-8">
           <Card elevated className="overflow-hidden animate-fade-up" style={{ animationDelay: '80ms' }}>
-            <div className="flex items-center justify-between border-b border-line px-5 py-4">
-              <div className="flex items-center gap-3">
-                <h2 className="font-display text-lg font-bold text-ink">Tareas de hoy</h2>
-                <Badge tone={pending ? 'accent' : 'success'}>
-                  {pending ? `${pending} pendientes` : 'Completadas'}
-                </Badge>
+            <div className="border-b border-line px-5 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <h2 className="font-display text-lg font-bold text-ink">Tareas de hoy</h2>
+                  <Badge tone={pending ? 'accent' : 'success'}>
+                    {pending ? `${pending} pendientes` : 'Completadas'}
+                  </Badge>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  iconRight={ArrowRight}
+                  onClick={() => navigate('negocio')}
+                >
+                  Ver todas
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                iconRight={ArrowRight}
-                onClick={() => navigate('negocio')}
-              >
-                Ver todas
-              </Button>
+              {totalToday > 0 && (
+                <div className="mt-3 flex items-center gap-3">
+                  <ProgressBar value={(doneToday.length / totalToday) * 100} size="sm" className="flex-1" />
+                  <span className="text-2xs font-semibold tabular text-subtle">
+                    {doneToday.length}/{totalToday} hechas
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="p-2.5">
               {todays.length > 0 ? (
                 <div className="space-y-0.5">
-                  {todays.map((t) => (
-                    <TaskRow key={t.id} task={t} />
+                  {todays.map((t, i) => (
+                    <div key={t.id} className="animate-fade-up" style={{ animationDelay: `${100 + i * 45}ms` }}>
+                      <TaskRow task={t} />
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -163,11 +189,13 @@ export default function Inicio() {
             <CardBody className="flex items-center gap-4">
               <div
                 className={cx(
-                  'grid h-12 w-12 shrink-0 place-items-center rounded-xl transition-colors',
-                  entrenoHoy ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-muted'
+                  'grid h-12 w-12 shrink-0 place-items-center rounded-xl transition-all duration-300',
+                  entrenoHoy ? 'bg-accent text-accent-fg shadow-glow' : 'bg-surface-2 text-muted'
                 )}
               >
-                {entrenoHoy ? <Check size={22} strokeWidth={2.6} /> : <Dumbbell size={22} />}
+                <span key={String(entrenoHoy)} className="animate-scale-in">
+                  {entrenoHoy ? <Check size={22} strokeWidth={2.6} /> : <Dumbbell size={22} />}
+                </span>
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-ink">Entreno de hoy</p>

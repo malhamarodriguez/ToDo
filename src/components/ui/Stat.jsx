@@ -2,11 +2,11 @@ import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 import { cx } from '../../lib/utils'
 import { Card } from './Card'
 
-export function Stat({ label, value, delta, deltaLabel, icon: Icon, accent, spark, invertDelta, className }) {
+export function Stat({ label, value, delta, deltaLabel, icon: Icon, accent, spark, invertDelta, highlight, className }) {
   const up = delta != null && delta >= 0
   const good = invertDelta ? !up : up
   return (
-    <Card className={cx('p-5', className)}>
+    <Card hover className={cx('p-5', highlight && 'border-accent/30 bg-accent/[0.05]', className)}>
       <div className="flex items-start justify-between">
         <span className="text-[13px] font-medium text-muted">{label}</span>
         {Icon && (

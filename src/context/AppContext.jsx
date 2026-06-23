@@ -91,6 +91,25 @@ export function AppProvider({ children }) {
   const moveTask = useCallback((id, status) => {
     setTasks((list) => list.map((t) => (t.id === id ? { ...t, status } : t)))
   }, [])
+  // Reordenación con inserción precisa (Kanban): mueve `id` a `status`,
+  // insertándolo respecto a `target` { taskId, pos: 'before'|'after' }.
+  const reorderTask = useCallback((id, status, target) => {
+    setTasks((list) => {
+      const dragged = list.find((t) => t.id === id)
+      if (!dragged) return list
+      const rest = list.filter((t) => t.id !== id)
+      const updated = { ...dragged, status }
+      if (!target || target.taskId == null) {
+        let lastIdx = -1
+        rest.forEach((t, i) => t.status === status && (lastIdx = i))
+        rest.splice(lastIdx + 1, 0, updated)
+      } else {
+        const idx = rest.findIndex((t) => t.id === target.taskId)
+        rest.splice(target.pos === 'after' ? idx + 1 : idx, 0, updated)
+      }
+      return rest
+    })
+  }, [])
   const addTask = useCallback((task) => {
     setTasks((list) => [{ id: uid(), subtasks: [], tags: [], status: 'todo', ...task }, ...list])
   }, [])
@@ -109,6 +128,7 @@ export function AppProvider({ children }) {
     setTasks,
     toggleTask,
     moveTask,
+    reorderTask,
     addTask,
     entrenoHoy,
     setEntrenoHoy,

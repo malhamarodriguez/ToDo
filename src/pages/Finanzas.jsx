@@ -10,6 +10,7 @@ import {
   Repeat,
   Users,
   ArrowRight,
+  AlertTriangle,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { FINANCE } from '../lib/data'
@@ -91,6 +92,7 @@ export default function Finanzas() {
           deltaLabel="vs. mes anterior"
           icon={Wallet}
           accent
+          highlight
           spark={<div className="w-20"><Sparkline data={f.flow.map((x) => ({ v: x.ingresos - x.gastos }))} height={34} /></div>}
         />
         <Stat label="Ingresos (mes)" value={eur(f.kpis.ingresosMes)} delta={9} icon={TrendingUp}
@@ -195,7 +197,10 @@ export default function Finanzas() {
               return (
                 <div key={b.cat}>
                   <div className="mb-1.5 flex items-center justify-between text-[13px]">
-                    <span className="font-medium text-ink">{b.cat}</span>
+                    <span className="flex items-center gap-1.5 font-medium text-ink">
+                      {b.cat}
+                      {over && <AlertTriangle size={13} className="text-danger" />}
+                    </span>
                     <span className={cx('tabular font-semibold', over ? 'text-danger' : 'text-muted')}>
                       {eur(b.spent)} / {eur(b.limit)}
                     </span>

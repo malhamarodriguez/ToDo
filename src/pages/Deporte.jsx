@@ -89,7 +89,7 @@ export default function Deporte() {
       {/* Stats */}
       <div className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
         {stats.map((s) => (
-          <Card key={s.label} className="p-5">
+          <Card key={s.label} hover className="p-5">
             <div className="flex items-center justify-between">
               <span className="text-[13px] font-medium text-muted">{s.label}</span>
               <s.icon size={16} className={s.tone || 'text-subtle'} />
