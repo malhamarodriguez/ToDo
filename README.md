@@ -12,6 +12,10 @@ npm install      # instalar dependencias
 npm run dev      # desarrollo (http://localhost:5173)
 npm run build    # producción → dist/
 npm run preview  # previsualizar el build
+
+npm run build:single  # genera dist-single/index.html — un único archivo
+                      # autocontenido (JS, CSS y fuentes embebidas) que se
+                      # abre con doble clic vía file:// sin servidor.
 ```
 
 ---
