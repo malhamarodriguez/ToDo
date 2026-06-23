@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es" data-mode="dark" data-direction="eclipse">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0d0f15" />
+    <title>Núcleo — tu centro de mando</title>
+    <meta
+      name="description"
+      content="Núcleo: panel personal todo-en-uno para autónomos y emprendedores. Negocio, finanzas, deporte y objetivos en un solo sitio."
+    />
+    <script>
+      // Apply saved theme before paint to avoid a flash.
+      (function () {
+        try {
+          const s = JSON.parse(localStorage.getItem('nucleo:settings') || '{}')
+          const root = document.documentElement
+          if (s.mode) root.setAttribute('data-mode', s.mode === 'system'
+            ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+            : s.mode)
+          if (s.direction) root.setAttribute('data-direction', s.direction)
+          if (s.accent) {
+            root.style.setProperty('--accent', s.accent.hsl)
+            root.style.setProperty('--accent-fg', s.accent.fg)
+          }
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
