@@ -7,7 +7,12 @@ App web responsive (móvil y escritorio) construida con **React + Vite + Tailwin
 iconos **Lucide** y gráficas **Recharts**. Modo oscuro por defecto con modo claro,
 acento configurable y **dos direcciones visuales** intercambiables.
 
+Datos **sincronizados entre dispositivos** con **Supabase** (login + base de datos)
+y despliegue en **GitHub Pages**. La app arranca **vacía**: cada quien rellena su
+información. 👉 **Sigue [`SETUP.md`](./SETUP.md) para publicarla con tu URL.**
+
 ```bash
+cp .env.example .env.local   # pon tus credenciales de Supabase
 npm install      # instalar dependencias
 npm run dev      # desarrollo (http://localhost:5173)
 npm run build    # producción → dist/

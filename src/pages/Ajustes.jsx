@@ -2,8 +2,10 @@ import { useRef } from 'react'
 import {
   Moon, Sun, Monitor, Check, ChevronUp, ChevronDown, Eye, EyeOff,
   Download, Upload, RotateCcw, Palette, LayoutGrid, User, Sparkles,
+  LogOut, Database, KeyRound,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 import { ACCENTS, DIRECTIONS, customAccent } from '../lib/theme'
 import { MODULES } from '../lib/data'
 import { ICONS } from '../components/layout/icons'
@@ -22,7 +24,14 @@ function Panel({ title, subtitle, icon, children }) {
 
 export default function Ajustes() {
   const { settings, update, toast } = useApp()
+  const { user, signOut } = useAuth()
   const fileRef = useRef()
+
+  const reconnect = () => {
+    localStorage.removeItem('nucleo:sb_url')
+    localStorage.removeItem('nucleo:sb_key')
+    location.reload()
+  }
 
   const setModules = (mods) => update({ modules: mods })
   const moveModule = (i, dir) => {
@@ -65,6 +74,25 @@ export default function Ajustes() {
       <PageHeader eyebrow="Configuración" title="Ajustes" subtitle="Haz de Núcleo tu espacio." />
 
       <div className="space-y-5">
+        {/* Cuenta */}
+        <Panel title="Cuenta" subtitle="Tu sesión y sincronización" icon={KeyRound}>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-full bg-success/12 text-success">
+                <Database size={18} />
+              </span>
+              <div>
+                <p className="text-sm font-medium text-ink">{user?.email || 'Sesión activa'}</p>
+                <p className="text-2xs text-success">Sincronizado con la nube</p>
+              </div>
+            </div>
+            <div className="ml-auto flex gap-2.5">
+              <Button variant="secondary" icon={Database} onClick={reconnect}>Cambiar conexión</Button>
+              <Button variant="ghost" icon={LogOut} onClick={() => signOut()}>Cerrar sesión</Button>
+            </div>
+          </div>
+        </Panel>
+
         {/* Perfil */}
         <Panel title="Perfil" subtitle="Cómo te saluda la app" icon={User}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

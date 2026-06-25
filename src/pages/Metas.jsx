@@ -1,8 +1,10 @@
-import { Plus, Target, Briefcase, Wallet, HeartPulse, Sparkles } from 'lucide-react'
-import { useApp } from '../context/AppContext'
-import { GOALS } from '../lib/data'
+import { useState } from 'react'
+import { Plus, Target, Briefcase, Wallet, HeartPulse, Sparkles, Trash2 } from 'lucide-react'
+import { useData } from '../context/DataContext'
+import { AREAS } from '../lib/data'
 import { PageContainer, PageHeader } from '../components/layout/Page'
-import { Card, CardBody, Button, Badge, ProgressBar, ProgressRing } from '../components/ui'
+import { Card, CardBody, Button, Badge, ProgressBar, ProgressRing, EmptyState } from '../components/ui'
+import { RecordModal } from '../components/app/RecordModal'
 import { clamp, cx } from '../lib/utils'
 
 const AREA_META = {
@@ -11,26 +13,27 @@ const AREA_META = {
   Salud: { icon: HeartPulse, color: '342 80% 62%' },
   Personal: { icon: Sparkles, color: '36 92% 55%' },
 }
-
 const TYPE_LABEL = { percent: 'Porcentaje', numeric: 'Numérico', project: 'Proyecto' }
 
 function pctOf(g) {
-  if (g.type === 'percent') return g.value
+  if (g.type === 'percent') return Math.round(g.value)
   if (g.invert) return clamp(Math.round((g.target / g.value) * 100), 0, 100)
-  return clamp(Math.round((g.value / g.target) * 100), 0, 100)
+  return clamp(Math.round((g.value / Math.max(g.target, 1)) * 100), 0, 100)
 }
 function valueLabel(g) {
-  if (g.type === 'percent') return `${g.value}% de ${g.target}%`
+  const fmt = (n) => Number(n).toLocaleString('es-ES')
+  if (g.type === 'percent') return `${fmt(g.value)}% de ${fmt(g.target)}%`
   const u = g.unit || ''
-  const fmt = (n) => n.toLocaleString('es-ES')
   return `${fmt(g.value)}${u} de ${fmt(g.target)}${u}`
 }
 
 export default function Metas() {
-  const { toast } = useApp()
-  const areas = [...new Set(GOALS.map((g) => g.area))]
-  const done = GOALS.filter((g) => pctOf(g) >= 100).length
-  const avg = Math.round(GOALS.reduce((a, g) => a + pctOf(g), 0) / GOALS.length)
+  const { goals, remove } = useData()
+  const [open, setOpen] = useState(false)
+
+  const usedAreas = AREAS.filter((a) => goals.some((g) => g.area === a))
+  const done = goals.filter((g) => pctOf(g) >= 100).length
+  const avg = goals.length ? Math.round(goals.reduce((a, g) => a + pctOf(g), 0) / goals.length) : 0
 
   return (
     <PageContainer>
@@ -38,83 +41,84 @@ export default function Metas() {
         eyebrow="Norte"
         title="Metas"
         subtitle="Lo que mueve la aguja, por área de tu vida."
-        actions={
-          <Button variant="primary" icon={Plus} onClick={() => toast({ type: 'success', title: 'Nueva meta' })}>
-            <span className="hidden sm:inline">Nueva meta</span>
-          </Button>
-        }
+        actions={<Button variant="primary" icon={Plus} onClick={() => setOpen(true)}><span className="hidden sm:inline">Nueva meta</span></Button>}
       />
 
-      {/* Resumen */}
-      <div className="mb-6 flex flex-wrap items-center gap-5 rounded-xl border border-line bg-surface p-5">
-        <ProgressRing value={avg} size={76} stroke={7} />
-        <div>
-          <p className="font-display text-xl font-bold text-ink">Progreso global {avg}%</p>
-          <p className="text-sm text-muted">
-            {GOALS.length} metas activas · {done} completada{done === 1 ? '' : 's'}
-          </p>
-        </div>
-        <div className="ml-auto hidden gap-2 sm:flex">
-          {areas.map((a) => {
-            const Icon = AREA_META[a]?.icon || Target
-            return (
-              <span
-                key={a}
-                className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3 py-1 text-2xs font-medium text-muted"
-              >
-                <Icon size={13} style={{ color: `hsl(${AREA_META[a]?.color})` }} /> {a}
-              </span>
-            )
-          })}
-        </div>
-      </div>
+      {goals.length === 0 ? (
+        <Card>
+          <EmptyState icon={Target} title="Aún no tienes metas" desc="Define objetivos por área (negocio, finanzas, salud, personal) y sigue su progreso." action={<Button variant="primary" icon={Plus} onClick={() => setOpen(true)}>Crear primera meta</Button>} />
+        </Card>
+      ) : (
+        <>
+          <div className="mb-6 flex flex-wrap items-center gap-5 rounded-xl border border-line bg-surface p-5">
+            <ProgressRing value={avg} size={76} stroke={7} />
+            <div>
+              <p className="font-display text-xl font-bold text-ink">Progreso global {avg}%</p>
+              <p className="text-sm text-muted">{goals.length} metas activas · {done} completada{done === 1 ? '' : 's'}</p>
+            </div>
+          </div>
 
-      {/* Metas por área */}
-      <div className="space-y-8">
-        {areas.map((area) => {
-          const Icon = AREA_META[area]?.icon || Target
-          const color = AREA_META[area]?.color
-          const items = GOALS.filter((g) => g.area === area)
-          return (
-            <section key={area}>
-              <div className="mb-3 flex items-center gap-2.5">
-                <span
-                  className="grid h-8 w-8 place-items-center rounded-lg"
-                  style={{ background: `hsl(${color} / 0.14)`, color: `hsl(${color})` }}
-                >
-                  <Icon size={17} />
-                </span>
-                <h2 className="font-display text-lg font-bold text-ink">{area}</h2>
-                <span className="text-2xs tabular text-subtle">{items.length}</span>
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {items.map((g) => {
-                  const p = pctOf(g)
-                  const complete = p >= 100
-                  return (
-                    <Card key={g.id} hover>
-                      <CardBody>
-                        <div className="mb-3 flex items-start justify-between gap-2">
-                          <h3 className="text-[15px] font-semibold leading-tight text-ink">{g.title}</h3>
-                          <Badge tone={complete ? 'success' : 'neutral'}>{TYPE_LABEL[g.type]}</Badge>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <ProgressRing value={p} size={56} stroke={6} color={color} />
-                          <div className="min-w-0">
-                            <p className="font-display text-lg font-bold tabular text-ink">{p}%</p>
-                            <p className="truncate text-2xs text-subtle">{valueLabel(g)}</p>
-                          </div>
-                        </div>
-                        <ProgressBar value={p} size="sm" color={color} className="mt-4" />
-                      </CardBody>
-                    </Card>
-                  )
-                })}
-              </div>
-            </section>
-          )
-        })}
-      </div>
+          <div className="space-y-8">
+            {usedAreas.map((area) => {
+              const Icon = AREA_META[area]?.icon || Target
+              const color = AREA_META[area]?.color
+              const items = goals.filter((g) => g.area === area)
+              return (
+                <section key={area}>
+                  <div className="mb-3 flex items-center gap-2.5">
+                    <span className="grid h-8 w-8 place-items-center rounded-lg" style={{ background: `hsl(${color} / 0.14)`, color: `hsl(${color})` }}><Icon size={17} /></span>
+                    <h2 className="font-display text-lg font-bold text-ink">{area}</h2>
+                    <span className="text-2xs tabular text-subtle">{items.length}</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {items.map((g) => {
+                      const p = pctOf(g)
+                      const complete = p >= 100
+                      return (
+                        <Card key={g.id} hover className="group">
+                          <CardBody>
+                            <div className="mb-3 flex items-start justify-between gap-2">
+                              <h3 className="text-[15px] font-semibold leading-tight text-ink">{g.title}</h3>
+                              <div className="flex items-center gap-1.5">
+                                <Badge tone={complete ? 'success' : 'neutral'}>{TYPE_LABEL[g.type]}</Badge>
+                                <button onClick={() => remove('goals', g.id)} className="text-subtle opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"><Trash2 size={13} /></button>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <ProgressRing value={p} size={56} stroke={6} color={color} />
+                              <div className="min-w-0">
+                                <p className="font-display text-lg font-bold tabular text-ink">{p}%</p>
+                                <p className="truncate text-2xs text-subtle">{valueLabel(g)}</p>
+                              </div>
+                            </div>
+                            <ProgressBar value={p} size="sm" color={color} className="mt-4" />
+                          </CardBody>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                </section>
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      <RecordModal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Nueva meta"
+        subtitle="Define el objetivo y su medida"
+        table="goals"
+        fields={[
+          { key: 'title', label: 'Título', type: 'text', required: true, autoFocus: true, full: true },
+          { key: 'area', label: 'Área', type: 'select', options: AREAS.map((a) => ({ value: a, label: a })) },
+          { key: 'type', label: 'Tipo', type: 'select', options: [{ value: 'percent', label: 'Porcentaje' }, { value: 'numeric', label: 'Numérico' }, { value: 'project', label: 'Proyecto' }] },
+          { key: 'value', label: 'Actual', type: 'number', default: 0 },
+          { key: 'target', label: 'Objetivo', type: 'number', default: 100 },
+          { key: 'unit', label: 'Unidad', type: 'text', placeholder: '€, kg, hitos…' },
+        ]}
+      />
     </PageContainer>
   )
 }

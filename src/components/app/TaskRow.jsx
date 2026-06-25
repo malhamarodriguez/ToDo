@@ -1,5 +1,6 @@
-import { useApp } from '../../context/AppContext'
-import { projectById, PRIORITIES } from '../../lib/data'
+import { Trash2 } from 'lucide-react'
+import { useData } from '../../context/DataContext'
+import { findProject, PRIORITIES } from '../../lib/data'
 import { Checkbox, Badge, Chip, Dot } from '../ui'
 import { cx } from '../../lib/utils'
 
@@ -10,10 +11,10 @@ function subProgress(t) {
 }
 
 export function TaskRow({ task, compact }) {
-  const { toggleTask } = useApp()
+  const { toggleTask, remove, projects } = useData()
   const done = task.status === 'done'
-  const proj = projectById(task.project)
-  const prio = PRIORITIES[task.priority]
+  const proj = findProject(projects, task.project_id)
+  const prio = PRIORITIES[task.priority] || PRIORITIES.media
   const sp = subProgress(task)
 
   return (
@@ -27,27 +28,25 @@ export function TaskRow({ task, compact }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <Dot color={prio.hsl} size={7} className="shrink-0" />
-          <span
-            className={cx(
-              'truncate text-sm font-medium transition-colors',
-              done ? 'text-subtle line-through' : 'text-ink'
-            )}
-          >
+          <span className={cx('truncate text-sm font-medium transition-colors', done ? 'text-subtle line-through' : 'text-ink')}>
             {task.title}
           </span>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
           {proj && <Chip color={proj.color}>{proj.name}</Chip>}
-          {sp && (
-            <span className="text-2xs tabular text-subtle">
-              {sp.done}/{sp.total} subtareas
-            </span>
-          )}
+          {sp && <span className="text-2xs tabular text-subtle">{sp.done}/{sp.total} subtareas</span>}
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         {task.overdue && !done && <Badge tone="danger">Atrasada</Badge>}
         {task.today && !task.overdue && !done && <Badge tone="accent">Hoy</Badge>}
+        <button
+          onClick={() => remove('tasks', task.id)}
+          className="grid h-7 w-7 place-items-center rounded-md text-subtle opacity-0 transition-all hover:bg-danger/12 hover:text-danger group-hover:opacity-100"
+          aria-label="Borrar"
+        >
+          <Trash2 size={15} />
+        </button>
       </div>
     </div>
   )

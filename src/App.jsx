@@ -1,4 +1,6 @@
+import { AuthProvider } from './context/AuthContext'
 import { AppProvider, useApp } from './context/AppContext'
+import { AuthGate } from './components/auth/AuthGate'
 import { AppShell } from './components/layout/AppShell'
 import Inicio from './pages/Inicio'
 import Negocio from './pages/Negocio'
@@ -28,10 +30,14 @@ function Router() {
 
 export default function App() {
   return (
-    <AppProvider>
-      <AppShell>
-        <Router />
-      </AppShell>
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <AuthGate>
+          <AppShell>
+            <Router />
+          </AppShell>
+        </AuthGate>
+      </AppProvider>
+    </AuthProvider>
   )
 }

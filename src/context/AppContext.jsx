@@ -1,18 +1,17 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { ACCENTS, applyTheme, resolveMode } from '../lib/theme'
-import { INITIAL_TASKS, MODULES } from '../lib/data'
+import { MODULES } from '../lib/data'
 import { uid } from '../lib/utils'
 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
 const DEFAULT_SETTINGS = {
-  name: 'Alex',
-  role: 'Consultor & founder',
-  mode: 'dark', // dark | light | system
-  direction: 'eclipse', // eclipse | calido
+  name: '',
+  role: '',
+  mode: 'dark',
+  direction: 'eclipse',
   accent: ACCENTS[0],
-  // orden y visibilidad de módulos
   modules: MODULES.map((m) => ({ id: m.id, hidden: false })),
 }
 
@@ -30,14 +29,11 @@ export function AppProvider({ children }) {
   const [route, setRoute] = useState(
     () => (typeof location !== 'undefined' && location.hash.replace('#/', '')) || 'inicio'
   )
-  const [tasks, setTasks] = useState(INITIAL_TASKS)
-  const [entrenoHoy, setEntrenoHoy] = useState(false)
   const [toasts, setToasts] = useState([])
   const [navOpen, setNavOpen] = useState(false)
   const [quickAdd, setQuickAdd] = useState(false)
   const themingTimer = useRef()
 
-  // Persistir + aplicar tema
   useEffect(() => {
     localStorage.setItem('nucleo:settings', JSON.stringify(settings))
     document.documentElement.classList.add('theming')
@@ -49,7 +45,6 @@ export function AppProvider({ children }) {
     )
   }, [settings])
 
-  // Reaccionar a cambios del sistema cuando mode = 'system'
   useEffect(() => {
     if (settings.mode !== 'system') return
     const mq = window.matchMedia('(prefers-color-scheme: light)')
@@ -58,7 +53,6 @@ export function AppProvider({ children }) {
     return () => mq.removeEventListener('change', fn)
   }, [settings])
 
-  // Sincronizar ruta con el hash
   useEffect(() => {
     const onHash = () => setRoute(location.hash.replace('#/', '') || 'inicio')
     window.addEventListener('hashchange', onHash)
@@ -73,6 +67,11 @@ export function AppProvider({ children }) {
   }, [])
 
   const update = useCallback((patch) => setSettings((s) => ({ ...s, ...patch })), [])
+  // Hidratar ajustes desde el perfil de Supabase sin perder la forma por defecto
+  const hydrateSettings = useCallback(
+    (incoming) => setSettings((s) => ({ ...DEFAULT_SETTINGS, ...s, ...incoming })),
+    []
+  )
 
   const toast = useCallback((opts) => {
     const t = typeof opts === 'string' ? { title: opts } : opts
@@ -82,41 +81,10 @@ export function AppProvider({ children }) {
   }, [])
   const dismissToast = useCallback((id) => setToasts((l) => l.filter((x) => x.id !== id)), [])
 
-  // ---- Acciones de tareas ----
-  const toggleTask = useCallback((id) => {
-    setTasks((list) =>
-      list.map((t) => (t.id === id ? { ...t, status: t.status === 'done' ? 'todo' : 'done' } : t))
-    )
-  }, [])
-  const moveTask = useCallback((id, status) => {
-    setTasks((list) => list.map((t) => (t.id === id ? { ...t, status } : t)))
-  }, [])
-  // Reordenación con inserción precisa (Kanban): mueve `id` a `status`,
-  // insertándolo respecto a `target` { taskId, pos: 'before'|'after' }.
-  const reorderTask = useCallback((id, status, target) => {
-    setTasks((list) => {
-      const dragged = list.find((t) => t.id === id)
-      if (!dragged) return list
-      const rest = list.filter((t) => t.id !== id)
-      const updated = { ...dragged, status }
-      if (!target || target.taskId == null) {
-        let lastIdx = -1
-        rest.forEach((t, i) => t.status === status && (lastIdx = i))
-        rest.splice(lastIdx + 1, 0, updated)
-      } else {
-        const idx = rest.findIndex((t) => t.id === target.taskId)
-        rest.splice(target.pos === 'after' ? idx + 1 : idx, 0, updated)
-      }
-      return rest
-    })
-  }, [])
-  const addTask = useCallback((task) => {
-    setTasks((list) => [{ id: uid(), subtasks: [], tags: [], status: 'todo', ...task }, ...list])
-  }, [])
-
   const value = {
     settings,
     update,
+    hydrateSettings,
     resolvedMode: resolveMode(settings.mode),
     route,
     navigate,
@@ -124,14 +92,6 @@ export function AppProvider({ children }) {
     setNavOpen,
     quickAdd,
     setQuickAdd,
-    tasks,
-    setTasks,
-    toggleTask,
-    moveTask,
-    reorderTask,
-    addTask,
-    entrenoHoy,
-    setEntrenoHoy,
     toasts,
     toast,
     dismissToast,

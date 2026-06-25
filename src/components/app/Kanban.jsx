@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Plus, GripVertical } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import { projectById, PRIORITIES } from '../../lib/data'
+import { useData } from '../../context/DataContext'
+import { findProject, PRIORITIES } from '../../lib/data'
 import { Badge, Chip, ProgressBar, Dot } from '../ui'
 import { cx } from '../../lib/utils'
 
@@ -22,9 +23,9 @@ function DropLine({ show }) {
   )
 }
 
-function KanbanCard({ task, onDragStart, onDragEnd, onDragOverCard, dragging }) {
-  const proj = projectById(task.project)
-  const prio = PRIORITIES[task.priority]
+function KanbanCard({ task, projects, onDragStart, onDragEnd, onDragOverCard, dragging }) {
+  const proj = findProject(projects, task.project_id)
+  const prio = PRIORITIES[task.priority] || PRIORITIES.media
   const sp = task.subtasks?.length
     ? Math.round((task.subtasks.filter((s) => s.done).length / task.subtasks.length) * 100)
     : null
@@ -48,14 +49,9 @@ function KanbanCard({ task, onDragStart, onDragEnd, onDragOverCard, dragging }) 
           <Dot color={prio.hsl} size={7} ring />
           <span className="text-2xs font-medium uppercase tracking-wide text-subtle">{prio.label}</span>
         </div>
-        <GripVertical
-          size={14}
-          className="-mr-1 text-subtle opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-        />
+        <GripVertical size={14} className="-mr-1 text-subtle opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
       </div>
-      <h4 className={cx('text-sm font-medium leading-snug text-ink', done && 'text-subtle line-through')}>
-        {task.title}
-      </h4>
+      <h4 className={cx('text-sm font-medium leading-snug text-ink', done && 'text-subtle line-through')}>{task.title}</h4>
 
       {sp != null && (
         <div className="mt-3">
@@ -71,18 +67,17 @@ function KanbanCard({ task, onDragStart, onDragEnd, onDragOverCard, dragging }) 
         {proj && <Chip color={proj.color}>{proj.name}</Chip>}
         {task.overdue && !done && <Badge tone="danger">Atrasada</Badge>}
         {task.today && !task.overdue && !done && <Badge tone="accent">Hoy</Badge>}
-        {!task.today && !task.overdue && task.due && (
-          <span className="text-2xs text-subtle">{task.due}</span>
-        )}
+        {!task.today && !task.overdue && task.due && <span className="text-2xs text-subtle">{task.due}</span>}
       </div>
     </article>
   )
 }
 
 export function KanbanBoard({ tasks }) {
-  const { reorderTask, setQuickAdd } = useApp()
+  const { setQuickAdd } = useApp()
+  const { moveTask, projects } = useData()
   const [dragId, setDragId] = useState(null)
-  const [target, setTarget] = useState(null) // { col, taskId, pos }
+  const [target, setTarget] = useState(null)
 
   const onDragStart = (e, id) => {
     setDragId(id)
@@ -102,7 +97,7 @@ export function KanbanBoard({ tasks }) {
     setTarget({ col, taskId, pos })
   }
   const onDrop = (col) => {
-    if (dragId) reorderTask(dragId, col, target?.col === col ? target : null)
+    if (dragId) moveTask(dragId, col, target?.col === col ? target : null)
     onDragEnd()
   }
 
@@ -110,7 +105,6 @@ export function KanbanBoard({ tasks }) {
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
       {COLUMNS.map((col) => {
         const items = tasks.filter((t) => t.status === col.id)
-        const isOver = target?.col === col.id || (dragId && target == null)
         return (
           <div
             key={col.id}
@@ -143,7 +137,6 @@ export function KanbanBoard({ tasks }) {
             <div
               className="flex min-h-[140px] flex-1 flex-col gap-2.5 px-3 pb-3"
               onDragOver={(e) => {
-                // zona vacía bajo las tarjetas → insertar al final
                 if (e.target === e.currentTarget) {
                   e.preventDefault()
                   setTarget({ col: col.id, taskId: null, pos: 'end' })
@@ -155,6 +148,7 @@ export function KanbanBoard({ tasks }) {
                   <DropLine show={target?.col === col.id && target.taskId === t.id && target.pos === 'before'} />
                   <KanbanCard
                     task={t}
+                    projects={projects}
                     dragging={dragId === t.id}
                     onDragStart={onDragStart}
                     onDragEnd={onDragEnd}
@@ -164,7 +158,6 @@ export function KanbanBoard({ tasks }) {
                 </div>
               ))}
 
-              {/* placeholder al final / columna vacía */}
               {target?.col === col.id && target.taskId == null && (
                 <div className="rounded-xl border-2 border-dashed border-accent/40 bg-accent/[0.05] py-6" />
               )}

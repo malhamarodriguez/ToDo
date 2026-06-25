@@ -9,6 +9,11 @@ dist-single
 dist-ssr
 *.local
 
+# env (credenciales locales)
+.env
+.env.local
+.env.*.local
+
 # logs
 npm-debug.log*
 yarn-debug.log*

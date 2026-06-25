@@ -54,3 +54,35 @@ export function clamp(n, min, max) {
 }
 
 export const uid = () => Math.random().toString(36).slice(2, 9)
+
+const MES_ABBR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
+export function todayISO() {
+  const d = new Date()
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+  return d.toISOString().slice(0, 10)
+}
+
+// "2026-06-23" → "23 jun"
+export function isoShort(iso) {
+  if (!iso) return ''
+  const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number)
+  return `${d} ${MES_ABBR[(m || 1) - 1]}`
+}
+
+function isoOf(d) {
+  const x = new Date(d)
+  x.setMinutes(x.getMinutes() - x.getTimezoneOffset())
+  return x.toISOString().slice(0, 10)
+}
+
+// Etiqueta relativa: Hoy / Ayer / "23 jun"
+export function relDay(iso) {
+  if (!iso) return ''
+  const key = String(iso).slice(0, 10)
+  if (key === todayISO()) return 'Hoy'
+  const y = new Date()
+  y.setDate(y.getDate() - 1)
+  if (key === isoOf(y)) return 'Ayer'
+  return isoShort(iso)
+}

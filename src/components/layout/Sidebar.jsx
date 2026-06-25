@@ -1,11 +1,11 @@
 import { Settings, Plus } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
+import { useData } from '../../context/DataContext'
 import { MODULES } from '../../lib/data'
 import { ICONS } from './icons'
 import { Logo } from './Logo'
 import { Avatar, Button } from '../ui'
-import { cx, eur, signedEur } from '../../lib/utils'
-import { FINANCE } from '../../lib/data'
+import { cx, eur, signedEur, todayISO } from '../../lib/utils'
 
 function NavItem({ mod, active, onClick }) {
   const Icon = ICONS[mod.icon]
@@ -32,6 +32,15 @@ function NavItem({ mod, active, onClick }) {
 
 export function Sidebar() {
   const { route, navigate, settings, setQuickAdd } = useApp()
+  const { movements, holdings } = useData()
+  const month = todayISO().slice(0, 7)
+  const balanceMes = movements
+    .filter((m) => String(m.date).slice(0, 7) === month)
+    .reduce((a, m) => a + Number(m.amount), 0)
+  const patrimonio = holdings.reduce(
+    (a, h) => a + (h.kind === 'liability' ? -Number(h.value) : Number(h.value)),
+    0
+  )
   const mods = settings.modules
     .filter((m) => !m.hidden)
     .map((m) => MODULES.find((x) => x.id === m.id))
@@ -62,11 +71,11 @@ export function Sidebar() {
       <div className="mx-4 mb-3 rounded-lg border border-line bg-surface-2/60 px-3.5 py-3">
         <div className="flex items-center justify-between text-[13px]">
           <span className="text-subtle">Balance mes</span>
-          <span className="font-semibold tabular text-success">{signedEur(FINANCE.kpis.balanceMes)}</span>
+          <span className={cx('font-semibold tabular', balanceMes >= 0 ? 'text-success' : 'text-danger')}>{signedEur(balanceMes)}</span>
         </div>
         <div className="mt-1.5 flex items-center justify-between text-[13px]">
           <span className="text-subtle">Patrimonio</span>
-          <span className="font-semibold tabular text-ink">{eur(FINANCE.kpis.patrimonio)}</span>
+          <span className="font-semibold tabular text-ink">{eur(patrimonio)}</span>
         </div>
       </div>
 
