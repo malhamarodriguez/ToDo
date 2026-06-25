@@ -46,6 +46,8 @@ export function DataProvider({ children }) {
           app.hydrateSettings(prof.settings)
         } else {
           lastSettings.current = JSON.stringify(app.settings)
+          // Crear la fila de perfil si aún no existe (sin depender de triggers)
+          if (!prof) await supabase.from('profiles').upsert({ id: user.id, name: app.settings.name || '' })
         }
       } catch (err) {
         console.warn('Carga de datos:', err?.message || err)
@@ -67,8 +69,7 @@ export function DataProvider({ children }) {
       lastSettings.current = str
       await supabase
         .from('profiles')
-        .update({ settings: app.settings, name: app.settings.name, role: app.settings.role })
-        .eq('id', user.id)
+        .upsert({ id: user.id, settings: app.settings, name: app.settings.name, role: app.settings.role })
     }, 700)
     return () => clearTimeout(id)
   }, [app.settings, user])
