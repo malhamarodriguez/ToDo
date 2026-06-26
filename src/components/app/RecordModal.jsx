@@ -7,7 +7,7 @@ import { Modal, Button, Label, Input, Textarea, Select, Dot } from '../ui'
 
 // Formulario genérico dirigido por configuración de campos.
 // fields: [{ key, label, type, options?, placeholder?, hint?, required?, full?, default? }]
-export function RecordModal({ open, onClose, title, subtitle, table, fields, initial, afterSave }) {
+export function RecordModal({ open, onClose, title, subtitle, table, fields, initial, afterSave, onDelete }) {
   const { toast } = useApp()
   const { add, update } = useData()
   const [v, setV] = useState({})
@@ -33,6 +33,7 @@ export function RecordModal({ open, onClose, title, subtitle, table, fields, ini
     fields.forEach((f) => {
       let val = v[f.key]
       if (f.type === 'number') val = val === '' ? 0 : Number(val)
+      if (f.type === 'date' && (val === '' || val == null)) val = null
       payload[f.key] = val
     })
     setBusy(true)
@@ -53,6 +54,18 @@ export function RecordModal({ open, onClose, title, subtitle, table, fields, ini
       subtitle={subtitle}
       footer={
         <>
+          {onDelete && (
+            <Button
+              variant="danger"
+              className="mr-auto"
+              onClick={() => {
+                onDelete()
+                onClose()
+              }}
+            >
+              Eliminar
+            </Button>
+          )}
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
           <Button variant="primary" onClick={submit} disabled={busy}>{busy ? 'Guardando…' : 'Guardar'}</Button>
         </>

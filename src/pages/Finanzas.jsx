@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import {
   Plus, Wallet, TrendingUp, TrendingDown, PiggyBank, Landmark, Calculator,
-  Repeat, Users, ArrowRight, AlertTriangle, Trash2,
+  Repeat, Users, ArrowRight, AlertTriangle, Banknote, Pencil, CheckCircle2,
 } from 'lucide-react'
+import { useApp } from '../context/AppContext'
 import { useData } from '../context/DataContext'
 import { PageContainer, PageHeader } from '../components/layout/Page'
 import { TrendArea, GroupedBars, DonutChart } from '../components/charts'
 import { useThemeColors } from '../components/charts/useThemeColors'
 import {
   Card, CardHeader, CardBody, Stat, Button, ProgressBar, Badge, Dot,
-  Table, THead, TH, TBody, TR, TD, EmptyState,
+  Table, THead, TH, TBody, TR, TD, EmptyState, Modal, Label, Input,
 } from '../components/ui'
 import { RecordModal } from '../components/app/RecordModal'
 import { eur, signedEur, cx, todayISO } from '../lib/utils'
@@ -30,7 +31,7 @@ function lastMonths(n) {
 
 const MODALS = {
   movement: {
-    title: 'Nuevo movimiento', table: 'movements',
+    title: 'Nuevo movimiento', noun: 'movimiento', table: 'movements',
     fields: [
       { key: 'concept', label: 'Concepto', type: 'text', required: true, autoFocus: true, full: true },
       { key: 'category', label: 'Categoría', type: 'text', placeholder: 'Marketing, Software…' },
@@ -39,7 +40,7 @@ const MODALS = {
     ],
   },
   budget: {
-    title: 'Nuevo presupuesto', table: 'budgets',
+    title: 'Nuevo presupuesto', noun: 'presupuesto', table: 'budgets',
     fields: [
       { key: 'category', label: 'Categoría', type: 'text', required: true, autoFocus: true },
       { key: 'limit_amount', label: 'Límite (€)', type: 'number' },
@@ -48,7 +49,7 @@ const MODALS = {
     ],
   },
   saving: {
-    title: 'Nuevo objetivo de ahorro', table: 'savings',
+    title: 'Nuevo objetivo de ahorro', noun: 'objetivo', table: 'savings',
     fields: [
       { key: 'name', label: 'Nombre', type: 'text', required: true, autoFocus: true },
       { key: 'value', label: 'Acumulado (€)', type: 'number' },
@@ -57,15 +58,15 @@ const MODALS = {
     ],
   },
   holding: {
-    title: 'Activo o pasivo', table: 'holdings',
+    title: 'Añadir al patrimonio', noun: 'elemento', table: 'holdings',
     fields: [
-      { key: 'name', label: 'Nombre', type: 'text', required: true, autoFocus: true },
+      { key: 'name', label: 'Nombre', type: 'text', required: true, autoFocus: true, placeholder: 'Cuenta, fondo, préstamo…' },
       { key: 'value', label: 'Valor (€)', type: 'number' },
-      { key: 'kind', label: 'Tipo', type: 'select', options: [{ value: 'asset', label: 'Activo' }, { value: 'liability', label: 'Pasivo' }] },
+      { key: 'kind', label: 'Tipo', type: 'select', options: [{ value: 'asset', label: 'Activo (lo que tienes)' }, { value: 'liability', label: 'Pasivo (lo que debes)' }] },
     ],
   },
   client: {
-    title: 'Nuevo cliente', table: 'clients',
+    title: 'Nuevo cliente', noun: 'cliente', table: 'clients',
     fields: [
       { key: 'name', label: 'Nombre', type: 'text', required: true, autoFocus: true },
       { key: 'kind', label: 'Tipo', type: 'text', placeholder: 'Retainer, Proyecto…' },
@@ -75,7 +76,7 @@ const MODALS = {
     ],
   },
   recurring: {
-    title: 'Movimiento recurrente', table: 'recurring',
+    title: 'Movimiento recurrente', noun: 'recurrente', table: 'recurring',
     fields: [
       { key: 'concept', label: 'Concepto', type: 'text', required: true, autoFocus: true },
       { key: 'amount', label: 'Importe (€)', type: 'number', hint: 'negativo = gasto' },
@@ -84,10 +85,33 @@ const MODALS = {
   },
 }
 
+function SalaryModal({ open, onClose }) {
+  const { settings, update, toast } = useApp()
+  const [val, setVal] = useState(settings.salary || '')
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Tu nómina"
+      subtitle="Tu ingreso fijo mensual neto"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button variant="primary" onClick={() => { update({ salary: Number(val) || 0 }); toast({ type: 'success', title: 'Nómina guardada' }); onClose() }}>Guardar</Button>
+        </>
+      }
+    >
+      <Label hint="€ al mes">Importe de la nómina</Label>
+      <Input type="number" step="0.01" autoFocus value={val} onChange={(e) => setVal(e.target.value)} placeholder="0" />
+    </Modal>
+  )
+}
+
 export default function Finanzas() {
+  const { settings, toast } = useApp()
   const c = useThemeColors()
-  const { movements, budgets, savings, holdings, clients, recurring, remove } = useData()
-  const [modal, setModal] = useState(null)
+  const { movements, budgets, savings, holdings, clients, recurring, add, remove } = useData()
+  const [modal, setModal] = useState(null) // 'movement' | {type,row} | 'salary'
 
   const months = lastMonths(6)
   const flow = months.map(({ key, label }) => {
@@ -105,11 +129,12 @@ export default function Finanzas() {
   const gastosMes = mThis.filter((m) => m.amount < 0).reduce((a, m) => a + Math.abs(Number(m.amount)), 0)
   const balanceMes = ingresosMes - gastosMes
 
-  const activos = holdings.filter((h) => h.kind !== 'liability').reduce((a, h) => a + Number(h.value), 0)
-  const pasivos = holdings.filter((h) => h.kind === 'liability').reduce((a, h) => a + Number(h.value), 0)
+  const assetItems = holdings.filter((h) => h.kind !== 'liability')
+  const liabItems = holdings.filter((h) => h.kind === 'liability')
+  const activos = assetItems.reduce((a, h) => a + Number(h.value), 0)
+  const pasivos = liabItems.reduce((a, h) => a + Number(h.value), 0)
   const neto = activos - pasivos
 
-  // Estimador de impuestos (últimos 3 meses como trimestre)
   const q = lastMonths(3).map((x) => x.key)
   const mQ = movements.filter((m) => q.includes(mKey(m.date)))
   const ingresosTrim = mQ.filter((m) => m.amount > 0).reduce((a, m) => a + Number(m.amount), 0)
@@ -119,18 +144,34 @@ export default function Finanzas() {
   const irpf = Math.max(0, Math.round(beneficioTrim * 0.2))
   const provisionar = Math.max(0, ivaLiquidar) + irpf
 
+  const salary = Number(settings.salary) || 0
+  const nominaThisMonth = mThis.some((m) => (m.category || '').toLowerCase() === 'nómina' || (m.concept || '').toLowerCase() === 'nómina')
+  const registrarNomina = async () => {
+    if (!salary) return setModal('salary')
+    await add('movements', { concept: 'Nómina', category: 'Nómina', amount: salary, date: todayISO(), kind: 'in' })
+    toast({ type: 'success', title: 'Nómina registrada', desc: eur(salary) })
+  }
+
   const hasMovements = movements.length > 0
-  const cfg = modal ? MODALS[modal] : null
+
+  // helpers de modal
+  const openNew = (type) => setModal(type)
+  const openEdit = (type, row) => setModal({ type, row })
+  const cfg = modal && modal !== 'salary' ? MODALS[typeof modal === 'string' ? modal : modal.type] : null
+  const editingRow = typeof modal === 'object' && modal ? modal.row : null
+
+  const rowCls = 'group flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-surface-2'
 
   return (
     <PageContainer>
       <PageHeader
         eyebrow="Dinero"
         title="Finanzas"
-        subtitle="Cashflow, patrimonio e impuestos de tu actividad."
-        actions={<Button variant="primary" icon={Plus} onClick={() => setModal('movement')}><span className="hidden sm:inline">Movimiento</span></Button>}
+        subtitle="Nómina, ingresos y gastos, y patrimonio. Toca cualquier elemento para editarlo."
+        actions={<Button variant="primary" icon={Plus} onClick={() => openNew('movement')}><span className="hidden sm:inline">Movimiento</span></Button>}
       />
 
+      {/* KPIs */}
       <div className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat label="Balance del mes" value={signedEur(balanceMes)} icon={Wallet} accent highlight />
         <Stat label="Ingresos (mes)" value={eur(ingresosMes)} icon={TrendingUp} />
@@ -138,38 +179,63 @@ export default function Finanzas() {
         <Stat label="Patrimonio neto" value={eur(neto)} icon={Landmark} />
       </div>
 
+      {/* Nómina + Balance acumulado */}
       <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-12">
+        <Card className="lg:col-span-4">
+          <CardHeader title="Nómina" subtitle="Tu ingreso fijo mensual" icon={Banknote}
+            action={<Button variant="ghost" size="icon-sm" icon={Pencil} onClick={() => setModal('salary')} />} />
+          <CardBody className="pt-2">
+            <div className="rounded-xl border border-accent/20 bg-accent/[0.06] p-4">
+              <p className="text-2xs font-medium uppercase tracking-wide text-accent">Cada mes</p>
+              <p className="mt-1 font-display text-3xl font-bold tabular text-ink">{salary ? eur(salary) : '— €'}</p>
+              <p className="mt-1 text-2xs text-muted">{salary ? 'neto al mes' : 'aún sin definir'}</p>
+            </div>
+            {nominaThisMonth ? (
+              <div className="mt-3 flex items-center gap-2 text-[13px] text-success">
+                <CheckCircle2 size={15} /> Registrada este mes
+              </div>
+            ) : (
+              <Button variant="soft" size="sm" icon={Plus} className="mt-3 w-full" onClick={registrarNomina}>
+                Registrar nómina de este mes
+              </Button>
+            )}
+          </CardBody>
+        </Card>
+
         <Card className="lg:col-span-8">
           <CardHeader title="Balance acumulado" subtitle="Saldo neto de tus movimientos" icon={TrendingUp} />
           <CardBody className="pt-3">
             {hasMovements ? (
-              <TrendArea data={saldo} series={[{ key: 'saldo', name: 'Saldo', color: c.accent, fill: 0.2 }]} fmt={(v) => `${Math.round(v / 1000)}k`} height={260} />
-            ) : <EmptyState icon={TrendingUp} title="Sin movimientos todavía" desc="Registra ingresos y gastos para ver tu evolución." action={<Button size="sm" variant="soft" icon={Plus} onClick={() => setModal('movement')}>Añadir movimiento</Button>} />}
-          </CardBody>
-        </Card>
-
-        <Card className="lg:col-span-4">
-          <CardHeader title="Objetivos de ahorro" icon={PiggyBank} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => setModal('saving')} />} />
-          <CardBody className="space-y-4 pt-3">
-            {savings.length ? savings.map((s) => {
-              const p = s.target ? Math.round((s.value / s.target) * 100) : 0
-              return (
-                <div key={s.id} className="group">
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <span className="flex items-center gap-2 text-[13px] font-medium text-ink"><Dot color={s.color} size={7} /> {s.name}</span>
-                    <span className="flex items-center gap-2 text-2xs font-semibold tabular text-muted">{p}%
-                      <button onClick={() => remove('savings', s.id)} className="text-subtle opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"><Trash2 size={12} /></button>
-                    </span>
-                  </div>
-                  <ProgressBar value={p} size="sm" color={s.color} />
-                  <p className="mt-1 text-2xs tabular text-subtle">{eur(s.value)} de {eur(s.target)}</p>
-                </div>
-              )
-            }) : <EmptyState icon={PiggyBank} title="Sin objetivos" desc="Crea tu primera meta de ahorro." compact />}
+              <TrendArea data={saldo} series={[{ key: 'saldo', name: 'Saldo', color: c.accent, fill: 0.2 }]} fmt={(v) => `${Math.round(v / 1000)}k`} height={220} />
+            ) : <EmptyState icon={TrendingUp} title="Sin movimientos todavía" desc="Registra ingresos y gastos para ver tu evolución." action={<Button size="sm" variant="soft" icon={Plus} onClick={() => openNew('movement')}>Añadir movimiento</Button>} />}
           </CardBody>
         </Card>
       </div>
 
+      {/* Ingresos y gastos (movimientos) */}
+      <Card className="mb-5">
+        <CardHeader title="Ingresos y gastos" subtitle="Tus movimientos · toca uno para editar o eliminar" icon={Wallet}
+          action={<Button variant="soft" size="sm" icon={Plus} onClick={() => openNew('movement')}>Añadir</Button>} />
+        <div className="px-1 pb-2">
+          {movements.length ? (
+            <Table>
+              <THead><TH>Concepto</TH><TH>Categoría</TH><TH>Fecha</TH><TH align="right">Importe</TH></THead>
+              <TBody>
+                {movements.slice(0, 20).map((m) => (
+                  <TR key={m.id} className="cursor-pointer" onClick={() => openEdit('movement', m)}>
+                    <TD><span className="font-medium">{m.concept}</span></TD>
+                    <TD>{m.category ? <Badge tone="neutral">{m.category}</Badge> : <span className="text-subtle">—</span>}</TD>
+                    <TD className="text-muted">{m.date}</TD>
+                    <TD align="right"><span className={cx('font-semibold', m.amount > 0 ? 'text-success' : 'text-ink')}>{signedEur(m.amount)}</span></TD>
+                  </TR>
+                ))}
+              </TBody>
+            </Table>
+          ) : <EmptyState icon={Wallet} title="Sin movimientos" desc="Registra tu primer ingreso o gasto." action={<Button size="sm" variant="primary" icon={Plus} onClick={() => openNew('movement')}>Nuevo movimiento</Button>} />}
+        </div>
+      </Card>
+
+      {/* Flujo + presupuestos */}
       <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-12">
         <Card className="lg:col-span-7">
           <CardHeader title="Ingresos vs. gastos" subtitle="Últimos 6 meses" icon={TrendingUp} />
@@ -181,46 +247,49 @@ export default function Finanzas() {
         </Card>
 
         <Card className="lg:col-span-5">
-          <CardHeader title="Presupuestos" subtitle="Por categoría" icon={Wallet} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => setModal('budget')} />} />
-          <CardBody className="space-y-3.5 pt-3">
+          <CardHeader title="Presupuestos" subtitle="Toca para editar" icon={Wallet} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => openNew('budget')} />} />
+          <CardBody className="space-y-1 pt-2">
             {budgets.length ? budgets.map((b) => {
               const p = b.limit_amount ? Math.round((b.spent / b.limit_amount) * 100) : 0
               const over = b.spent > b.limit_amount
               return (
-                <div key={b.id} className="group">
+                <button key={b.id} onClick={() => openEdit('budget', b)} className="w-full rounded-lg px-2 py-2 text-left transition-colors hover:bg-surface-2">
                   <div className="mb-1.5 flex items-center justify-between text-[13px]">
                     <span className="flex items-center gap-1.5 font-medium text-ink">{b.category}{over && <AlertTriangle size={13} className="text-danger" />}</span>
-                    <span className={cx('flex items-center gap-2 tabular font-semibold', over ? 'text-danger' : 'text-muted')}>
-                      {eur(b.spent)} / {eur(b.limit_amount)}
-                      <button onClick={() => remove('budgets', b.id)} className="text-subtle opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"><Trash2 size={12} /></button>
-                    </span>
+                    <span className={cx('tabular font-semibold', over ? 'text-danger' : 'text-muted')}>{eur(b.spent)} / {eur(b.limit_amount)}</span>
                   </div>
                   <ProgressBar value={Math.min(p, 100)} size="sm" color={over ? '358 70% 60%' : b.color} />
-                </div>
+                </button>
               )
             }) : <EmptyState icon={Wallet} title="Sin presupuestos" desc="Define límites por categoría." compact />}
           </CardBody>
         </Card>
       </div>
 
+      {/* Patrimonio + impuestos + ahorro */}
       <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-12">
-        <Card className="lg:col-span-4">
-          <CardHeader title="Patrimonio neto" subtitle="Activos y pasivos" icon={Landmark} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => setModal('holding')} />} />
+        <Card className="lg:col-span-5">
+          <CardHeader title="Patrimonio" subtitle="Lo que tienes y lo que debes" icon={Landmark} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => openNew('holding')} />} />
           <CardBody className="pt-1">
             {holdings.length ? (
-              <>
-                <DonutChart data={[{ name: 'Activos', value: activos, color: '243 76% 64%' }, { name: 'Pasivos', value: pasivos, color: '358 70% 60%' }]} fmt={eur} height={180}>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <DonutChart data={[{ name: 'Activos', value: activos, color: '243 76% 64%' }, { name: 'Pasivos', value: pasivos, color: '358 70% 60%' }]} fmt={eur} height={150} inner={46} outer={68}>
                   <div>
                     <p className="text-2xs uppercase tracking-wide text-subtle">Neto</p>
-                    <p className="font-display text-xl font-bold tabular text-ink">{eur(neto)}</p>
+                    <p className="font-display text-lg font-bold tabular text-ink">{eur(neto)}</p>
                   </div>
                 </DonutChart>
-                <div className="mt-2 space-y-1.5">
-                  <Row label="Activos" value={eur(activos)} color="243 76% 64%" />
-                  <Row label="Pasivos" value={`−${eur(pasivos)}`} color="358 70% 60%" />
+                <div className="flex-1 space-y-1">
+                  {holdings.map((h) => (
+                    <button key={h.id} onClick={() => openEdit('holding', h)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] transition-colors hover:bg-surface-2">
+                      <Dot color={h.kind === 'liability' ? '358 70% 60%' : '243 76% 64%'} size={7} />
+                      <span className="min-w-0 flex-1 truncate text-ink">{h.name}</span>
+                      <span className={cx('tabular font-semibold', h.kind === 'liability' ? 'text-danger' : 'text-ink')}>{h.kind === 'liability' ? '−' : ''}{eur(Number(h.value))}</span>
+                    </button>
+                  ))}
                 </div>
-              </>
-            ) : <EmptyState icon={Landmark} title="Sin patrimonio" desc="Añade activos y pasivos." compact />}
+              </div>
+            ) : <EmptyState icon={Landmark} title="Sin patrimonio" desc="Añade tus activos (cuentas, inversiones) y pasivos (deudas)." action={<Button size="sm" variant="soft" icon={Plus} onClick={() => openNew('holding')}>Añadir</Button>} compact />}
           </CardBody>
         </Card>
 
@@ -240,77 +309,73 @@ export default function Finanzas() {
           </CardBody>
         </Card>
 
-        <Card className="lg:col-span-4">
-          <CardHeader title="Recurrentes" subtitle="Previsión mensual" icon={Repeat} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => setModal('recurring')} />} />
-          <CardBody className="space-y-1 pt-2">
-            {recurring.length ? recurring.map((r) => (
-              <div key={r.id} className="group flex items-center gap-3 rounded-lg px-2 py-1.5 hover:bg-surface-2">
-                <span className={cx('grid h-7 w-7 shrink-0 place-items-center rounded-md', r.amount > 0 ? 'bg-success/12 text-success' : 'bg-surface-2 text-muted')}><Repeat size={13} /></span>
-                <div className="min-w-0 flex-1"><p className="truncate text-[13px] font-medium text-ink">{r.concept}</p><p className="text-2xs text-subtle">{r.day}</p></div>
-                <span className={cx('text-[13px] font-semibold tabular', r.amount > 0 ? 'text-success' : 'text-ink')}>{signedEur(r.amount)}</span>
-                <button onClick={() => remove('recurring', r.id)} className="text-subtle opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"><Trash2 size={12} /></button>
-              </div>
-            )) : <EmptyState icon={Repeat} title="Sin recurrentes" compact />}
+        <Card className="lg:col-span-3">
+          <CardHeader title="Ahorro" subtitle="Toca para editar" icon={PiggyBank} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => openNew('saving')} />} />
+          <CardBody className="space-y-3 pt-2">
+            {savings.length ? savings.map((s) => {
+              const p = s.target ? Math.round((s.value / s.target) * 100) : 0
+              return (
+                <button key={s.id} onClick={() => openEdit('saving', s)} className="block w-full text-left">
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-[13px] font-medium text-ink"><Dot color={s.color} size={7} /> {s.name}</span>
+                    <span className="text-2xs font-semibold tabular text-muted">{p}%</span>
+                  </div>
+                  <ProgressBar value={p} size="sm" color={s.color} />
+                </button>
+              )
+            }) : <EmptyState icon={PiggyBank} title="Sin objetivos" compact />}
           </CardBody>
         </Card>
       </div>
 
+      {/* Recurrentes + clientes */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        <Card className="lg:col-span-8">
-          <CardHeader title="Movimientos recientes" icon={Wallet} action={<Button variant="soft" size="sm" icon={Plus} onClick={() => setModal('movement')}>Añadir</Button>} />
-          <div className="px-1 pb-2">
-            {movements.length ? (
-              <Table>
-                <THead><TH>Concepto</TH><TH>Categoría</TH><TH>Fecha</TH><TH align="right">Importe</TH><TH align="right"> </TH></THead>
-                <TBody>
-                  {movements.slice(0, 12).map((m) => (
-                    <TR key={m.id} className="group">
-                      <TD><span className="font-medium">{m.concept}</span></TD>
-                      <TD>{m.category ? <Badge tone="neutral">{m.category}</Badge> : <span className="text-subtle">—</span>}</TD>
-                      <TD className="text-muted">{m.date}</TD>
-                      <TD align="right"><span className={cx('font-semibold', m.amount > 0 ? 'text-success' : 'text-ink')}>{signedEur(m.amount)}</span></TD>
-                      <TD align="right"><button onClick={() => remove('movements', m.id)} className="text-subtle opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"><Trash2 size={14} /></button></TD>
-                    </TR>
-                  ))}
-                </TBody>
-              </Table>
-            ) : <EmptyState icon={Wallet} title="Sin movimientos" desc="Registra tu primer ingreso o gasto." action={<Button size="sm" variant="primary" icon={Plus} onClick={() => setModal('movement')}>Nuevo movimiento</Button>} />}
-          </div>
+        <Card className="lg:col-span-6">
+          <CardHeader title="Gastos e ingresos fijos" subtitle="Recurrentes · toca para editar" icon={Repeat} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => openNew('recurring')} />} />
+          <CardBody className="space-y-1 pt-2">
+            {recurring.length ? recurring.map((r) => (
+              <button key={r.id} onClick={() => openEdit('recurring', r)} className={rowCls}>
+                <span className={cx('grid h-7 w-7 shrink-0 place-items-center rounded-md', r.amount > 0 ? 'bg-success/12 text-success' : 'bg-surface-2 text-muted')}><Repeat size={13} /></span>
+                <div className="min-w-0 flex-1 text-left"><p className="truncate text-[13px] font-medium text-ink">{r.concept}</p><p className="text-2xs text-subtle">{r.day}</p></div>
+                <span className={cx('text-[13px] font-semibold tabular', r.amount > 0 ? 'text-success' : 'text-ink')}>{signedEur(r.amount)}</span>
+              </button>
+            )) : <EmptyState icon={Repeat} title="Sin recurrentes" compact />}
+          </CardBody>
         </Card>
 
-        <Card className="lg:col-span-4">
-          <CardHeader title="Clientes" subtitle={`${clients.length} cuentas`} icon={Users} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => setModal('client')} />} />
+        <Card className="lg:col-span-6">
+          <CardHeader title="Clientes" subtitle={`${clients.length} cuentas · toca para editar`} icon={Users} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => openNew('client')} />} />
           <CardBody className="space-y-1.5 pt-2">
             {clients.length ? clients.map((cl) => (
-              <div key={cl.id} className="group flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-surface-2">
+              <button key={cl.id} onClick={() => openEdit('client', cl)} className={rowCls}>
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-2 font-display text-sm font-bold text-muted">{cl.name[0]}</span>
-                <div className="min-w-0 flex-1"><p className="truncate text-[13px] font-semibold text-ink">{cl.name}</p><p className="text-2xs text-subtle">{cl.kind}</p></div>
+                <div className="min-w-0 flex-1 text-left"><p className="truncate text-[13px] font-semibold text-ink">{cl.name}</p><p className="text-2xs text-subtle">{cl.kind}</p></div>
                 <div className="text-right">
                   <Badge tone={cl.status === 'Activo' ? 'success' : cl.status === 'Propuesta' ? 'warning' : 'neutral'}>{cl.status}</Badge>
                   {cl.pending > 0 && <p className="mt-1 text-2xs tabular text-warning">{eur(cl.pending)} pdte.</p>}
                 </div>
-                <button onClick={() => remove('clients', cl.id)} className="text-subtle opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"><Trash2 size={13} /></button>
-              </div>
+              </button>
             )) : <EmptyState icon={Users} title="Sin clientes" desc="Añade tus cuentas." compact />}
           </CardBody>
         </Card>
       </div>
 
+      {modal === 'salary' && <SalaryModal open onClose={() => setModal(null)} />}
       {cfg && (
-        <RecordModal open onClose={() => setModal(null)} title={cfg.title} table={cfg.table} fields={cfg.fields} />
+        <RecordModal
+          open
+          onClose={() => setModal(null)}
+          title={editingRow ? `Editar ${cfg.noun}` : cfg.title}
+          table={cfg.table}
+          fields={cfg.fields}
+          initial={editingRow}
+          onDelete={editingRow ? () => remove(cfg.table, editingRow.id) : undefined}
+        />
       )}
     </PageContainer>
   )
 }
 
-function Row({ label, value, color }) {
-  return (
-    <div className="flex items-center justify-between text-[13px]">
-      <span className="flex items-center gap-2 text-muted"><Dot color={color} size={7} /> {label}</span>
-      <span className="font-semibold tabular text-ink">{value}</span>
-    </div>
-  )
-}
 function Line({ label, value }) {
   return (
     <div className="flex items-center justify-between border-b border-line/60 pb-2 last:border-0">

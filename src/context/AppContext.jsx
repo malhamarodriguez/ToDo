@@ -12,6 +12,7 @@ const DEFAULT_SETTINGS = {
   mode: 'dark',
   direction: 'eclipse',
   accent: ACCENTS[0],
+  salary: 0,
   modules: MODULES.map((m) => ({ id: m.id, hidden: false })),
 }
 
