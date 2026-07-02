@@ -1,14 +1,47 @@
 import { useEffect } from 'react'
+import { Sparkles, X } from 'lucide-react'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { MobileTabBar, MobileDrawer } from './MobileNav'
-import { Toaster } from '../ui'
+import { Toaster, Button } from '../ui'
 import { TaskModal } from '../app/TaskModal'
 import { CommandPalette } from '../app/CommandPalette'
+import { UpgradeModal } from '../app/UpgradeModal'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
 import { MODULES } from '../../lib/data'
 import { resolveMode } from '../../lib/theme'
+import { exitDemo } from '../../lib/demo'
+
+// Aviso persistente del modo demo, con salida clara hacia el registro.
+function DemoBanner() {
+  const { demo } = useData()
+  if (!demo) return null
+  const toSignup = () => {
+    exitDemo()
+    location.hash = '#/acceso'
+    location.reload()
+  }
+  const leave = () => {
+    exitDemo()
+    location.hash = '#/'
+    location.reload()
+  }
+  return (
+    <div className="sticky top-16 z-20 flex items-center gap-3 border-b border-accent/25 bg-accent/[0.08] px-4 py-2 text-[13px] backdrop-blur sm:px-6">
+      <Sparkles size={14} className="shrink-0 text-accent" />
+      <span className="min-w-0 truncate text-ink">
+        Estás en la <strong>demo</strong> — juega sin miedo, nada se guarda en la nube.
+      </span>
+      <Button variant="primary" size="sm" className="ml-auto shrink-0" onClick={toSignup}>
+        Crear mi cuenta
+      </Button>
+      <button onClick={leave} className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-subtle hover:bg-surface-2 hover:text-ink" aria-label="Salir de la demo">
+        <X size={15} />
+      </button>
+    </div>
+  )
+}
 
 function SkeletonPage() {
   return (
@@ -64,6 +97,7 @@ export function AppShell({ children }) {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
+        <DemoBanner />
         <main className="flex-1 overflow-x-hidden pb-28 lg:pb-0">
           {loading ? <SkeletonPage /> : children}
         </main>
@@ -73,6 +107,7 @@ export function AppShell({ children }) {
       <MobileDrawer />
       <TaskModal />
       <CommandPalette />
+      <UpgradeModal />
       <Toaster />
     </div>
   )

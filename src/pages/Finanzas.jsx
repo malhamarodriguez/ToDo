@@ -14,6 +14,7 @@ import {
 } from '../components/ui'
 import { RecordModal } from '../components/app/RecordModal'
 import { eur, signedEur, cx, todayISO } from '../lib/utils'
+import { canCreate, FREE_LIMITS } from '../lib/plan'
 
 const MES_ABBR = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 const mKey = (iso) => String(iso || '').slice(0, 7)
@@ -108,10 +109,24 @@ function SalaryModal({ open, onClose }) {
 }
 
 export default function Finanzas() {
-  const { settings, toast } = useApp()
+  const { settings, toast, setUpgradeOpen } = useApp()
   const c = useThemeColors()
-  const { movements, budgets, savings, holdings, clients, recurring, add, remove } = useData()
+  const { movements, budgets, savings, holdings, clients, recurring, add, remove, isPro } = useData()
   const [modal, setModal] = useState(null) // 'movement' | {type,row} | 'salary'
+
+  // Límites del plan Gratis en colecciones "pro"
+  const GATES = {
+    client: ['clients', () => clients.length, FREE_LIMITS.clients, 'clientes'],
+    budget: ['budgets', () => budgets.length, FREE_LIMITS.budgets, 'presupuestos'],
+    saving: ['savings', () => savings.length, FREE_LIMITS.savings, 'objetivos de ahorro'],
+  }
+  const guardedOpen = (type) => {
+    const g = GATES[type]
+    if (g && !canCreate(g[0], g[1](), isPro)) {
+      return setUpgradeOpen(`El plan Gratis incluye ${g[2]} ${g[3]} — pasa a Pro para crear ilimitados.`)
+    }
+    setModal(type)
+  }
 
   const months = lastMonths(6)
   const flow = months.map(({ key, label }) => {
@@ -247,7 +262,7 @@ export default function Finanzas() {
         </Card>
 
         <Card className="lg:col-span-5">
-          <CardHeader title="Presupuestos" subtitle="Toca para editar" icon={Wallet} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => openNew('budget')} />} />
+          <CardHeader title="Presupuestos" subtitle="Toca para editar" icon={Wallet} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => guardedOpen('budget')} />} />
           <CardBody className="space-y-1 pt-2">
             {budgets.length ? budgets.map((b) => {
               const p = b.limit_amount ? Math.round((b.spent / b.limit_amount) * 100) : 0
@@ -310,7 +325,7 @@ export default function Finanzas() {
         </Card>
 
         <Card className="lg:col-span-3">
-          <CardHeader title="Ahorro" subtitle="Toca para editar" icon={PiggyBank} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => openNew('saving')} />} />
+          <CardHeader title="Ahorro" subtitle="Toca para editar" icon={PiggyBank} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => guardedOpen('saving')} />} />
           <CardBody className="space-y-3 pt-2">
             {savings.length ? savings.map((s) => {
               const p = s.target ? Math.round((s.value / s.target) * 100) : 0
@@ -344,7 +359,7 @@ export default function Finanzas() {
         </Card>
 
         <Card className="lg:col-span-6">
-          <CardHeader title="Clientes" subtitle={`${clients.length} cuentas · toca para editar`} icon={Users} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => openNew('client')} />} />
+          <CardHeader title="Clientes" subtitle={`${clients.length} cuentas · toca para editar`} icon={Users} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => guardedOpen('client')} />} />
           <CardBody className="space-y-1.5 pt-2">
             {clients.length ? clients.map((cl) => (
               <button key={cl.id} onClick={() => openEdit('client', cl)} className={rowCls}>

@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback } f
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import { useApp } from './AppContext'
+import { demoSeed } from '../lib/demo'
+import { uid } from '../lib/utils'
 
 const DataCtx = createContext(null)
 export const useData = () => useContext(DataCtx)
@@ -12,22 +14,51 @@ export const TABLES = [
 ]
 
 const empty = () => Object.fromEntries(TABLES.map((t) => [t, []]))
+const DEMO_DATA_KEY = 'nucleo:demo-data'
 
-export function DataProvider({ children }) {
+export function DataProvider({ children, demo = false }) {
   const { user } = useAuth()
   const app = useApp()
   const [data, setData] = useState(empty)
+  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const lastSettings = useRef(null)
   const lastFetch = useRef(0)
-  // Ref para leer el estado actual dentro de callbacks sin re-crearlos
   const dataRef = useRef(data)
   dataRef.current = data
 
-  const fetchAll = useCallback(async (uid, { silent } = {}) => {
+  // ---------- Modo demo: todo en local ----------
+  useEffect(() => {
+    if (!demo) return
+    try {
+      const saved = JSON.parse(localStorage.getItem(DEMO_DATA_KEY) || 'null')
+      setData(saved && saved.tasks ? { ...empty(), ...saved } : demoSeed())
+    } catch {
+      setData(demoSeed())
+    }
+    setProfile({ plan: 'pro', demo: true })
+    setLoading(false)
+  }, [demo])
+
+  const persistDemo = (next) => {
+    try {
+      localStorage.setItem(DEMO_DATA_KEY, JSON.stringify(next))
+    } catch {}
+  }
+  const setBoth = useCallback(
+    (updater) => {
+      setData((d) => {
+        const next = updater(d)
+        if (demo) persistDemo(next)
+        return next
+      })
+    },
+    [demo]
+  )
+
+  // ---------- Nube (Supabase) ----------
+  const fetchAll = useCallback(async (uid_, { silent } = {}) => {
     if (!silent) setLoading(true)
-    // Red lenta o caída: no bloquear la interfaz más de 6s; los datos
-    // entran cuando la petición termine.
     const guard = setTimeout(() => setLoading(false), 6000)
     try {
       const results = await Promise.all(TABLES.map((t) => supabase.from(t).select('*')))
@@ -39,13 +70,14 @@ export function DataProvider({ children }) {
       setData(next)
       lastFetch.current = Date.now()
 
-      const { data: prof } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle()
+      const { data: prof } = await supabase.from('profiles').select('*').eq('id', uid_).maybeSingle()
+      setProfile(prof || null)
       if (prof?.settings && Object.keys(prof.settings).length) {
         lastSettings.current = JSON.stringify(prof.settings)
         app.hydrateSettings(prof.settings)
       } else {
         lastSettings.current = JSON.stringify(app.settings)
-        if (!prof) await supabase.from('profiles').upsert({ id: uid, name: app.settings.name || '' })
+        if (!prof) await supabase.from('profiles').upsert({ id: uid_, name: app.settings.name || '' })
       }
     } catch (err) {
       console.warn('Carga de datos:', err?.message || err)
@@ -55,19 +87,19 @@ export function DataProvider({ children }) {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Carga inicial al iniciar sesión
   useEffect(() => {
+    if (demo) return
     if (!user) {
       setData(empty())
       setLoading(false)
       return
     }
     fetchAll(user.id)
-  }, [user, fetchAll])
+  }, [user, fetchAll, demo])
 
-  // Refresco silencioso al volver a la pestaña (sincroniza entre dispositivos)
+  // Refresco silencioso al volver a la pestaña
   useEffect(() => {
-    if (!user) return
+    if (demo || !user) return
     const onVisible = () => {
       if (document.visibilityState !== 'visible') return
       if (Date.now() - lastFetch.current < 25000) return
@@ -79,11 +111,11 @@ export function DataProvider({ children }) {
       document.removeEventListener('visibilitychange', onVisible)
       window.removeEventListener('focus', onVisible)
     }
-  }, [user, fetchAll])
+  }, [user, fetchAll, demo])
 
-  // Persistir ajustes en el perfil (debounced)
+  // Persistir ajustes en el perfil (solo nube)
   useEffect(() => {
-    if (!user) return
+    if (demo || !user) return
     const str = JSON.stringify(app.settings)
     if (str === lastSettings.current) return
     const id = setTimeout(async () => {
@@ -93,10 +125,16 @@ export function DataProvider({ children }) {
         .upsert({ id: user.id, settings: app.settings, name: app.settings.name, role: app.settings.role })
     }, 700)
     return () => clearTimeout(id)
-  }, [app.settings, user])
+  }, [app.settings, user, demo])
 
+  // ---------- CRUD (nube o demo) ----------
   const add = useCallback(
     async (table, row) => {
+      if (demo) {
+        const ins = { id: uid(), ...row }
+        setBoth((d) => ({ ...d, [table]: [ins, ...d[table]] }))
+        return ins
+      }
       const { data: ins, error } = await supabase
         .from(table)
         .insert({ ...row, user_id: user.id })
@@ -109,27 +147,29 @@ export function DataProvider({ children }) {
       setData((d) => ({ ...d, [table]: [ins, ...d[table]] }))
       return ins
     },
-    [user, app]
+    [user, app, demo, setBoth]
   )
 
   const update = useCallback(
     async (table, id, patch) => {
-      setData((d) => ({ ...d, [table]: d[table].map((r) => (r.id === id ? { ...r, ...patch } : r)) }))
+      setBoth((d) => ({ ...d, [table]: d[table].map((r) => (r.id === id ? { ...r, ...patch } : r)) }))
+      if (demo) return
       const { error } = await supabase.from(table).update(patch).eq('id', id)
       if (error) app.toast({ type: 'danger', title: 'No se pudo actualizar', desc: error.message })
     },
-    [app]
+    [app, demo, setBoth]
   )
 
-  // Borrado con "Deshacer": elimina ya, y la notificación permite restaurar la fila tal cual.
   const remove = useCallback(
     async (table, id) => {
       const row = dataRef.current[table]?.find((r) => r.id === id)
-      setData((d) => ({ ...d, [table]: d[table].filter((r) => r.id !== id) }))
-      const { error } = await supabase.from(table).delete().eq('id', id)
-      if (error) {
-        app.toast({ type: 'danger', title: 'No se pudo borrar', desc: error.message })
-        return
+      setBoth((d) => ({ ...d, [table]: d[table].filter((r) => r.id !== id) }))
+      if (!demo) {
+        const { error } = await supabase.from(table).delete().eq('id', id)
+        if (error) {
+          app.toast({ type: 'danger', title: 'No se pudo borrar', desc: error.message })
+          return
+        }
       }
       if (row) {
         app.toast({
@@ -139,6 +179,10 @@ export function DataProvider({ children }) {
           action: {
             label: 'Deshacer',
             onClick: async () => {
+              if (demo) {
+                setBoth((d) => ({ ...d, [table]: [row, ...d[table]] }))
+                return
+              }
               const { data: ins, error: e2 } = await supabase.from(table).insert(row).select().single()
               if (!e2 && ins) setData((d) => ({ ...d, [table]: [ins, ...d[table]] }))
             },
@@ -146,7 +190,7 @@ export function DataProvider({ children }) {
         })
       }
     },
-    [app]
+    [app, demo, setBoth]
   )
 
   const toggleTask = useCallback(
@@ -179,8 +223,10 @@ export function DataProvider({ children }) {
     [update]
   )
 
-  const refetch = useCallback(() => user && fetchAll(user.id, { silent: true }), [user, fetchAll])
+  const refetch = useCallback(() => !demo && user && fetchAll(user.id, { silent: true }), [user, fetchAll, demo])
 
-  const value = { ...data, loading, add, update, remove, toggleTask, moveTask, refetch }
+  const isPro = demo || profile?.plan === 'pro'
+
+  const value = { ...data, loading, demo, profile, isPro, add, update, remove, toggleTask, moveTask, refetch }
   return <DataCtx.Provider value={value}>{children}</DataCtx.Provider>
 }

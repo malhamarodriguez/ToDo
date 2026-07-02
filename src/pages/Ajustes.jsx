@@ -7,6 +7,7 @@ import {
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useData, TABLES } from '../context/DataContext'
+import { FREE_LIMITS } from '../lib/plan'
 import { ACCENTS, DIRECTIONS, customAccent } from '../lib/theme'
 import { MODULES } from '../lib/data'
 import { ICONS } from '../components/layout/icons'
@@ -24,9 +25,10 @@ function Panel({ title, subtitle, icon, children }) {
 }
 
 export default function Ajustes() {
-  const { settings, update, toast } = useApp()
+  const { settings, update, toast, setUpgradeOpen } = useApp()
   const { user, signOut } = useAuth()
   const data = useData()
+  const { isPro } = data
   const fileRef = useRef()
   const [installEvt, setInstallEvt] = useState(null)
 
@@ -90,6 +92,28 @@ export default function Ajustes() {
       <PageHeader eyebrow="Configuración" title="Ajustes" subtitle="Haz de Núcleo tu espacio." />
 
       <div className="space-y-5">
+        {/* Plan */}
+        <Panel title="Tu plan" subtitle="Gestión de la suscripción" icon={Sparkles}>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className={cx(
+              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] font-semibold',
+              isPro ? 'border-accent/40 bg-accent/12 text-accent' : 'border-line bg-surface-2 text-muted'
+            )}>
+              {isPro ? '✦ Pro' : 'Gratis'}
+            </span>
+            <p className="text-[13px] text-muted">
+              {isPro
+                ? 'Tienes acceso a todo, sin límites.'
+                : `Proyectos (${FREE_LIMITS.projects}), clientes (${FREE_LIMITS.clients}) y metas (${FREE_LIMITS.goals}) limitados.`}
+            </p>
+            {!isPro && (
+              <Button variant="primary" size="sm" className="ml-auto" onClick={() => setUpgradeOpen(true)}>
+                Mejorar a Pro
+              </Button>
+            )}
+          </div>
+        </Panel>
+
         {/* Cuenta */}
         <Panel title="Cuenta" subtitle="Tu sesión y sincronización" icon={KeyRound}>
           <div className="flex flex-wrap items-center gap-3">

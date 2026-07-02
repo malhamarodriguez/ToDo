@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Mail, Lock, User, Sparkles, Settings2 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useApp } from '../../context/AppContext'
 import { Logo } from '../layout/Logo'
 import { Button, Input, Label, Segmented } from '../ui'
 
 export function AuthScreen() {
   const { signIn, signUp, signInMagic } = useAuth()
+  const { navigate } = useApp()
   const [tab, setTab] = useState('in')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -44,7 +46,7 @@ export function AuthScreen() {
     <div className="app-canvas grid min-h-[100dvh] place-items-center p-5">
       <div className="w-full max-w-md">
         <div className="mb-6 flex justify-center">
-          <Logo size={34} />
+          <Logo size={34} onClick={() => navigate('')} />
         </div>
         <div className="rounded-2xl border border-line bg-surface p-6 shadow-xl">
           <h1 className="text-xl font-semibold text-ink">

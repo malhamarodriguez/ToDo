@@ -8,10 +8,17 @@ import { TaskRow } from '../components/app/TaskRow'
 import { RecordModal } from '../components/app/RecordModal'
 import { Button, Segmented, Select, Dot, Card, EmptyState } from '../components/ui'
 import { cx, taskOverdue } from '../lib/utils'
+import { canCreate, FREE_LIMITS } from '../lib/plan'
 
 export default function Negocio() {
-  const { setQuickAdd } = useApp()
-  const { tasks, projects, remove } = useData()
+  const { setQuickAdd, setUpgradeOpen } = useApp()
+  const { tasks, projects, remove, isPro } = useData()
+  const newProject = () => {
+    if (!canCreate('projects', projects.length, isPro)) {
+      return setUpgradeOpen(`El plan Gratis incluye ${FREE_LIMITS.projects} proyectos — pasa a Pro para crear ilimitados.`)
+    }
+    setProjModal(true)
+  }
   const [view, setView] = useState('kanban')
   const [project, setProject] = useState('all')
   const [priority, setPriority] = useState('all')
@@ -72,7 +79,7 @@ export default function Negocio() {
             {p.name}
           </button>
         ))}
-        <Button variant="ghost" size="sm" icon={FolderPlus} onClick={() => setProjModal(true)}>Proyecto</Button>
+        <Button variant="ghost" size="sm" icon={FolderPlus} onClick={newProject}>Proyecto</Button>
         <div className="ml-auto w-36">
           <Select value={priority} onChange={(e) => setPriority(e.target.value)} className="h-9 text-[13px]">
             <option value="all">Toda prioridad</option>

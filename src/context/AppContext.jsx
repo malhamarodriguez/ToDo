@@ -39,6 +39,8 @@ export function AppProvider({ children }) {
   const [paletteOpen, setPaletteOpen] = useState(false)
   // Temporizador de enfoque: null | { title, endsAt }
   const [focus, setFocus] = useState(null)
+  // Modal de mejora a Pro: false | true | 'motivo'
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
   const themingTimer = useRef()
 
   useEffect(() => {
@@ -117,6 +119,8 @@ export function AppProvider({ children }) {
     focus,
     startFocus,
     stopFocus,
+    upgradeOpen,
+    setUpgradeOpen,
     toasts,
     toast,
     dismissToast,

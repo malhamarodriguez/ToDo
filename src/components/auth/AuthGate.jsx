@@ -1,8 +1,11 @@
+import { useApp } from '../../context/AppContext'
 import { useAuth } from '../../context/AuthContext'
 import { DataProvider } from '../../context/DataContext'
+import { isDemo } from '../../lib/demo'
 import { SetupScreen } from './SetupScreen'
 import { AuthScreen } from './AuthScreen'
 import { Mark } from '../layout/Logo'
+import Landing, { Legal } from '../../pages/Landing'
 
 function Splash() {
   return (
@@ -14,10 +17,22 @@ function Splash() {
   )
 }
 
+// Web pública para visitantes: landing, acceso y legal.
+function Marketing() {
+  const { route } = useApp()
+  if (route === 'acceso') return <AuthScreen />
+  if (route === 'privacidad' || route === 'terminos') return <Legal page={route} />
+  return <Landing />
+}
+
 export function AuthGate({ children }) {
   const { hasSupabase, loading, user } = useAuth()
+
+  // Modo demo: la app entera con datos locales, sin cuenta.
+  if (isDemo()) return <DataProvider demo>{children}</DataProvider>
+
   if (!hasSupabase) return <SetupScreen />
   if (loading) return <Splash />
-  if (!user) return <AuthScreen />
+  if (!user) return <Marketing />
   return <DataProvider>{children}</DataProvider>
 }

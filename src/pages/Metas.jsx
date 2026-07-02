@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Plus, Target, Briefcase, Wallet, HeartPulse, Sparkles, Trash2 } from 'lucide-react'
+import { useApp } from '../context/AppContext'
 import { useData } from '../context/DataContext'
 import { AREAS } from '../lib/data'
 import { PageContainer, PageHeader } from '../components/layout/Page'
 import { Card, CardBody, Button, Badge, ProgressBar, ProgressRing, EmptyState } from '../components/ui'
 import { RecordModal } from '../components/app/RecordModal'
 import { clamp, cx } from '../lib/utils'
+import { canCreate, FREE_LIMITS } from '../lib/plan'
 
 const AREA_META = {
   Negocio: { icon: Briefcase, color: '243 76% 64%' },
@@ -28,8 +30,15 @@ function valueLabel(g) {
 }
 
 export default function Metas() {
-  const { goals, remove } = useData()
+  const { setUpgradeOpen } = useApp()
+  const { goals, remove, isPro } = useData()
   const [open, setOpen] = useState(false)
+  const newGoal = () => {
+    if (!canCreate('goals', goals.length, isPro)) {
+      return setUpgradeOpen(`El plan Gratis incluye ${FREE_LIMITS.goals} metas — pasa a Pro para crear ilimitadas.`)
+    }
+    setOpen(true)
+  }
 
   const usedAreas = AREAS.filter((a) => goals.some((g) => g.area === a))
   const done = goals.filter((g) => pctOf(g) >= 100).length
@@ -41,12 +50,12 @@ export default function Metas() {
         eyebrow="Norte"
         title="Metas"
         subtitle="Lo que mueve la aguja, por área de tu vida."
-        actions={<Button variant="primary" icon={Plus} onClick={() => setOpen(true)}><span className="hidden sm:inline">Nueva meta</span></Button>}
+        actions={<Button variant="primary" icon={Plus} onClick={newGoal}><span className="hidden sm:inline">Nueva meta</span></Button>}
       />
 
       {goals.length === 0 ? (
         <Card>
-          <EmptyState icon={Target} title="Aún no tienes metas" desc="Define objetivos por área (negocio, finanzas, salud, personal) y sigue su progreso." action={<Button variant="primary" icon={Plus} onClick={() => setOpen(true)}>Crear primera meta</Button>} />
+          <EmptyState icon={Target} title="Aún no tienes metas" desc="Define objetivos por área (negocio, finanzas, salud, personal) y sigue su progreso." action={<Button variant="primary" icon={Plus} onClick={newGoal}>Crear primera meta</Button>} />
         </Card>
       ) : (
         <>
