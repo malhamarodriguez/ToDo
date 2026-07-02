@@ -7,7 +7,7 @@ import { KanbanBoard } from '../components/app/Kanban'
 import { TaskRow } from '../components/app/TaskRow'
 import { RecordModal } from '../components/app/RecordModal'
 import { Button, Segmented, Select, Dot, Card, EmptyState } from '../components/ui'
-import { cx } from '../lib/utils'
+import { cx, taskOverdue } from '../lib/utils'
 
 export default function Negocio() {
   const { setQuickAdd } = useApp()
@@ -23,7 +23,7 @@ export default function Negocio() {
   const stats = [
     { label: 'Total', value: filtered.length },
     { label: 'En curso', value: filtered.filter((t) => t.status === 'doing').length },
-    { label: 'Atrasadas', value: filtered.filter((t) => t.overdue && t.status !== 'done').length, tone: 'text-danger' },
+    { label: 'Atrasadas', value: filtered.filter((t) => taskOverdue(t)).length, tone: 'text-danger' },
     { label: 'Hechas', value: filtered.filter((t) => t.status === 'done').length, tone: 'text-success' },
   ]
 
@@ -102,12 +102,11 @@ export default function Negocio() {
             return (
               <div key={p.id}>
                 <div className="mb-2 flex items-center gap-2 px-1">
-                  <Dot color={p.color} size={9} ring />
-                  <h3 className="text-sm font-semibold text-ink">{p.name}</h3>
-                  <span className="text-2xs tabular text-subtle">{items.length}</span>
-                  <button onClick={() => remove('projects', p.id)} className="ml-1 text-subtle hover:text-danger" aria-label="Borrar proyecto">
-                    <Trash2 size={13} />
+                  <button onClick={() => setProjModal({ row: p })} className="flex items-center gap-2 rounded-md px-1 py-0.5 transition-colors hover:bg-surface-2">
+                    <Dot color={p.color} size={9} ring />
+                    <h3 className="text-sm font-semibold text-ink">{p.name}</h3>
                   </button>
+                  <span className="text-2xs tabular text-subtle">{items.length}</span>
                 </div>
                 <Card className="p-2">
                   <div className="space-y-0.5">{items.map((t) => <TaskRow key={t.id} task={t} />)}</div>
@@ -133,17 +132,21 @@ export default function Negocio() {
         </div>
       )}
 
-      <RecordModal
-        open={projModal}
-        onClose={() => setProjModal(false)}
-        title="Nuevo proyecto"
-        subtitle="Agrupa tareas y dale un color"
-        table="projects"
-        fields={[
-          { key: 'name', label: 'Nombre', type: 'text', required: true, autoFocus: true, placeholder: 'p. ej. SaaS · Núcleo' },
-          { key: 'color', label: 'Color', type: 'color' },
-        ]}
-      />
+      {projModal && (
+        <RecordModal
+          open
+          onClose={() => setProjModal(false)}
+          title={projModal.row ? 'Editar proyecto' : 'Nuevo proyecto'}
+          subtitle="Agrupa tareas y dale un color"
+          table="projects"
+          initial={projModal.row}
+          onDelete={projModal.row ? () => remove('projects', projModal.row.id) : undefined}
+          fields={[
+            { key: 'name', label: 'Nombre', type: 'text', required: true, autoFocus: true, placeholder: 'p. ej. SaaS · Núcleo' },
+            { key: 'color', label: 'Color', type: 'color' },
+          ]}
+        />
+      )}
     </PageContainer>
   )
 }

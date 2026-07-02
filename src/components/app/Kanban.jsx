@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Plus, GripVertical } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
 import { findProject, PRIORITIES } from '../../lib/data'
 import { Badge, Chip, ProgressBar, Dot } from '../ui'
-import { cx } from '../../lib/utils'
+import { cx, taskOverdue, taskToday, taskDueLabel } from '../../lib/utils'
 
 const COLUMNS = [
   { id: 'todo', label: 'Por hacer', tone: 'text-muted', accent: '218 14% 50%' },
@@ -23,13 +23,16 @@ function DropLine({ show }) {
   )
 }
 
-function KanbanCard({ task, projects, onDragStart, onDragEnd, onDragOverCard, dragging }) {
+function KanbanCard({ task, projects, onDragStart, onDragEnd, onDragOverCard, onOpen, dragging }) {
   const proj = findProject(projects, task.project_id)
   const prio = PRIORITIES[task.priority] || PRIORITIES.media
   const sp = task.subtasks?.length
     ? Math.round((task.subtasks.filter((s) => s.done).length / task.subtasks.length) * 100)
     : null
   const done = task.status === 'done'
+  const overdue = taskOverdue(task)
+  const hoy = taskToday(task)
+  const dueLabel = taskDueLabel(task)
 
   return (
     <article
@@ -37,6 +40,7 @@ function KanbanCard({ task, projects, onDragStart, onDragEnd, onDragOverCard, dr
       onDragStart={(e) => onDragStart(e, task.id)}
       onDragEnd={onDragEnd}
       onDragOver={(e) => onDragOverCard(e, task.id)}
+      onClick={onOpen}
       className={cx(
         'group select-none rounded-xl border bg-surface p-3.5 shadow-xs transition-all duration-200',
         dragging
@@ -65,28 +69,32 @@ function KanbanCard({ task, projects, onDragStart, onDragEnd, onDragOverCard, dr
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         {proj && <Chip color={proj.color}>{proj.name}</Chip>}
-        {task.overdue && !done && <Badge tone="danger">Atrasada</Badge>}
-        {task.today && !task.overdue && !done && <Badge tone="accent">Hoy</Badge>}
-        {!task.today && !task.overdue && task.due && <span className="text-2xs text-subtle">{task.due}</span>}
+        {overdue && <Badge tone="danger">Atrasada</Badge>}
+        {hoy && !overdue && !done && <Badge tone="accent">Hoy</Badge>}
+        {!hoy && !overdue && dueLabel && <span className="text-2xs text-subtle">{dueLabel}</span>}
       </div>
     </article>
   )
 }
 
 export function KanbanBoard({ tasks }) {
-  const { setQuickAdd } = useApp()
+  const { setQuickAdd, openTask } = useApp()
   const { moveTask, projects } = useData()
   const [dragId, setDragId] = useState(null)
   const [target, setTarget] = useState(null)
+  const justDragged = useRef(false)
 
   const onDragStart = (e, id) => {
     setDragId(id)
+    justDragged.current = true
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', id)
   }
   const onDragEnd = () => {
     setDragId(null)
     setTarget(null)
+    // evita que el click posterior al arrastre abra el editor
+    setTimeout(() => (justDragged.current = false), 120)
   }
   const onDragOverCard = (e, col, taskId) => {
     e.preventDefault()
@@ -153,6 +161,9 @@ export function KanbanBoard({ tasks }) {
                     onDragStart={onDragStart}
                     onDragEnd={onDragEnd}
                     onDragOverCard={(e, id) => onDragOverCard(e, col.id, id)}
+                    onOpen={() => {
+                      if (!justDragged.current) openTask(t)
+                    }}
                   />
                   <DropLine show={target?.col === col.id && target.taskId === t.id && target.pos === 'after'} />
                 </div>

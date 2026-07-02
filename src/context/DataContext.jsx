@@ -19,48 +19,69 @@ export function DataProvider({ children }) {
   const [data, setData] = useState(empty)
   const [loading, setLoading] = useState(true)
   const lastSettings = useRef(null)
+  const lastFetch = useRef(0)
+  // Ref para leer el estado actual dentro de callbacks sin re-crearlos
+  const dataRef = useRef(data)
+  dataRef.current = data
 
-  // Cargar todas las colecciones + perfil al iniciar sesión
+  const fetchAll = useCallback(async (uid, { silent } = {}) => {
+    if (!silent) setLoading(true)
+    // Red lenta o caída: no bloquear la interfaz más de 6s; los datos
+    // entran cuando la petición termine.
+    const guard = setTimeout(() => setLoading(false), 6000)
+    try {
+      const results = await Promise.all(TABLES.map((t) => supabase.from(t).select('*')))
+      const next = empty()
+      TABLES.forEach((t, i) => {
+        next[t] = results[i].data || []
+      })
+      next.tasks.sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+      setData(next)
+      lastFetch.current = Date.now()
+
+      const { data: prof } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle()
+      if (prof?.settings && Object.keys(prof.settings).length) {
+        lastSettings.current = JSON.stringify(prof.settings)
+        app.hydrateSettings(prof.settings)
+      } else {
+        lastSettings.current = JSON.stringify(app.settings)
+        if (!prof) await supabase.from('profiles').upsert({ id: uid, name: app.settings.name || '' })
+      }
+    } catch (err) {
+      console.warn('Carga de datos:', err?.message || err)
+    } finally {
+      clearTimeout(guard)
+      setLoading(false)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Carga inicial al iniciar sesión
   useEffect(() => {
-    let active = true
     if (!user) {
       setData(empty())
       setLoading(false)
       return
     }
-    setLoading(true)
-    ;(async () => {
-      try {
-        const results = await Promise.all(TABLES.map((t) => supabase.from(t).select('*')))
-        if (!active) return
-        const next = empty()
-        TABLES.forEach((t, i) => {
-          next[t] = results[i].data || []
-        })
-        next.tasks.sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-        setData(next)
+    fetchAll(user.id)
+  }, [user, fetchAll])
 
-        const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
-        if (prof?.settings && Object.keys(prof.settings).length) {
-          lastSettings.current = JSON.stringify(prof.settings)
-          app.hydrateSettings(prof.settings)
-        } else {
-          lastSettings.current = JSON.stringify(app.settings)
-          // Crear la fila de perfil si aún no existe (sin depender de triggers)
-          if (!prof) await supabase.from('profiles').upsert({ id: user.id, name: app.settings.name || '' })
-        }
-      } catch (err) {
-        console.warn('Carga de datos:', err?.message || err)
-      } finally {
-        if (active) setLoading(false)
-      }
-    })()
-    return () => {
-      active = false
+  // Refresco silencioso al volver a la pestaña (sincroniza entre dispositivos)
+  useEffect(() => {
+    if (!user) return
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      if (Date.now() - lastFetch.current < 25000) return
+      fetchAll(user.id, { silent: true })
     }
-  }, [user]) // eslint-disable-line react-hooks/exhaustive-deps
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+    }
+  }, [user, fetchAll])
 
-  // Persistir ajustes en el perfil (sincroniza tema/nombre entre dispositivos)
+  // Persistir ajustes en el perfil (debounced)
   useEffect(() => {
     if (!user) return
     const str = JSON.stringify(app.settings)
@@ -100,28 +121,45 @@ export function DataProvider({ children }) {
     [app]
   )
 
+  // Borrado con "Deshacer": elimina ya, y la notificación permite restaurar la fila tal cual.
   const remove = useCallback(
     async (table, id) => {
+      const row = dataRef.current[table]?.find((r) => r.id === id)
       setData((d) => ({ ...d, [table]: d[table].filter((r) => r.id !== id) }))
       const { error } = await supabase.from(table).delete().eq('id', id)
-      if (error) app.toast({ type: 'danger', title: 'No se pudo borrar', desc: error.message })
+      if (error) {
+        app.toast({ type: 'danger', title: 'No se pudo borrar', desc: error.message })
+        return
+      }
+      if (row) {
+        app.toast({
+          type: 'success',
+          title: 'Eliminado',
+          duration: 6000,
+          action: {
+            label: 'Deshacer',
+            onClick: async () => {
+              const { data: ins, error: e2 } = await supabase.from(table).insert(row).select().single()
+              if (!e2 && ins) setData((d) => ({ ...d, [table]: [ins, ...d[table]] }))
+            },
+          },
+        })
+      }
     },
     [app]
   )
 
-  // Tareas: alternar completada
   const toggleTask = useCallback(
     (id) => {
-      const t = data.tasks.find((x) => x.id === id)
+      const t = dataRef.current.tasks.find((x) => x.id === id)
       if (t) update('tasks', id, { status: t.status === 'done' ? 'todo' : 'done' })
     },
-    [data.tasks, update]
+    [update]
   )
 
-  // Tareas: mover/reordenar con cálculo de posición
   const moveTask = useCallback(
     (id, status, target) => {
-      const col = data.tasks
+      const col = dataRef.current.tasks
         .filter((t) => t.status === status && t.id !== id)
         .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
       let pos
@@ -138,9 +176,11 @@ export function DataProvider({ children }) {
       }
       update('tasks', id, { status, position: pos })
     },
-    [data.tasks, update]
+    [update]
   )
 
-  const value = { ...data, loading, add, update, remove, toggleTask, moveTask }
+  const refetch = useCallback(() => user && fetchAll(user.id, { silent: true }), [user, fetchAll])
+
+  const value = { ...data, loading, add, update, remove, toggleTask, moveTask, refetch }
   return <DataCtx.Provider value={value}>{children}</DataCtx.Provider>
 }

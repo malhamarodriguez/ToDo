@@ -76,6 +76,26 @@ function isoOf(d) {
   return x.toISOString().slice(0, 10)
 }
 
+// ---- Tareas: fecha límite ----
+const ISO_RE = /^\d{4}-\d{2}-\d{2}$/
+export const isISODate = (s) => ISO_RE.test(String(s || ''))
+
+// Vencida: fecha límite pasada (o marcada a mano) y sin completar
+export function taskOverdue(t) {
+  if (t.status === 'done') return false
+  if (isISODate(t.due)) return t.due < todayISO()
+  return Boolean(t.overdue)
+}
+// De hoy: marcada para hoy o con fecha límite hoy
+export function taskToday(t) {
+  return Boolean(t.today) || (isISODate(t.due) && t.due === todayISO())
+}
+// Etiqueta corta de la fecha límite
+export function taskDueLabel(t) {
+  if (isISODate(t.due)) return relDay(t.due)
+  return t.due || ''
+}
+
 // Etiqueta relativa: Hoy / Ayer / "23 jun"
 export function relDay(iso) {
   if (!iso) return ''

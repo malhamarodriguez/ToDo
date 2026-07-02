@@ -75,14 +75,11 @@ export default function Metas() {
                       const p = pctOf(g)
                       const complete = p >= 100
                       return (
-                        <Card key={g.id} hover className="group">
+                        <Card key={g.id} hover className="group cursor-pointer" role="button" onClick={() => setOpen({ row: g })}>
                           <CardBody>
                             <div className="mb-3 flex items-start justify-between gap-2">
                               <h3 className="text-[15px] font-semibold leading-tight text-ink">{g.title}</h3>
-                              <div className="flex items-center gap-1.5">
-                                <Badge tone={complete ? 'success' : 'neutral'}>{TYPE_LABEL[g.type]}</Badge>
-                                <button onClick={() => remove('goals', g.id)} className="text-subtle opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"><Trash2 size={13} /></button>
-                              </div>
+                              <Badge tone={complete ? 'success' : 'neutral'}>{TYPE_LABEL[g.type]}</Badge>
                             </div>
                             <div className="flex items-center gap-4">
                               <ProgressRing value={p} size={56} stroke={6} color={color} />
@@ -104,12 +101,15 @@ export default function Metas() {
         </>
       )}
 
+      {open && (
       <RecordModal
-        open={open}
+        open
         onClose={() => setOpen(false)}
-        title="Nueva meta"
-        subtitle="Define el objetivo y su medida"
+        title={open.row ? 'Editar meta' : 'Nueva meta'}
+        subtitle={open.row ? 'Actualiza el progreso o los datos' : 'Define el objetivo y su medida'}
         table="goals"
+        initial={open.row}
+        onDelete={open.row ? () => remove('goals', open.row.id) : undefined}
         fields={[
           { key: 'title', label: 'Título', type: 'text', required: true, autoFocus: true, full: true },
           { key: 'area', label: 'Área', type: 'select', options: AREAS.map((a) => ({ value: a, label: a })) },
@@ -119,6 +119,7 @@ export default function Metas() {
           { key: 'unit', label: 'Unidad', type: 'text', placeholder: '€, kg, hitos…' },
         ]}
       />
+      )}
     </PageContainer>
   )
 }

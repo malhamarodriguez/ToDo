@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Moon, Sun, Monitor, Check, ChevronUp, ChevronDown, Eye, EyeOff,
   Download, Upload, RotateCcw, Palette, LayoutGrid, User, Sparkles,
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
+import { useData, TABLES } from '../context/DataContext'
 import { ACCENTS, DIRECTIONS, customAccent } from '../lib/theme'
 import { MODULES } from '../lib/data'
 import { ICONS } from '../components/layout/icons'
@@ -25,7 +26,18 @@ function Panel({ title, subtitle, icon, children }) {
 export default function Ajustes() {
   const { settings, update, toast } = useApp()
   const { user, signOut } = useAuth()
+  const data = useData()
   const fileRef = useRef()
+  const [installEvt, setInstallEvt] = useState(null)
+
+  useEffect(() => {
+    const onPrompt = (e) => {
+      e.preventDefault()
+      setInstallEvt(e)
+    }
+    window.addEventListener('beforeinstallprompt', onPrompt)
+    return () => window.removeEventListener('beforeinstallprompt', onPrompt)
+  }, [])
 
   const reconnect = () => {
     localStorage.removeItem('nucleo:sb_url')
@@ -44,15 +56,18 @@ export default function Ajustes() {
   const toggleHidden = (id) =>
     setModules(settings.modules.map((m) => (m.id === id ? { ...m, hidden: !m.hidden } : m)))
 
+  // Copia completa: ajustes + todos tus datos (tareas, finanzas, metas…)
   const exportData = () => {
-    const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' })
+    const payload = { exportedAt: new Date().toISOString(), settings }
+    TABLES.forEach((t) => (payload[t] = data[t] || []))
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'nucleo-backup.json'
+    a.download = `nucleo-copia-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
-    toast({ type: 'success', title: 'Copia exportada', desc: 'nucleo-backup.json' })
+    toast({ type: 'success', title: 'Copia completa exportada', desc: 'Incluye todos tus datos' })
   }
   const importData = (e) => {
     const file = e.target.files?.[0]
@@ -60,8 +75,9 @@ export default function Ajustes() {
     const r = new FileReader()
     r.onload = () => {
       try {
-        update(JSON.parse(r.result))
-        toast({ type: 'success', title: 'Copia restaurada' })
+        const parsed = JSON.parse(r.result)
+        update(parsed.settings || parsed)
+        toast({ type: 'success', title: 'Ajustes restaurados', desc: 'Los datos viven en tu nube' })
       } catch {
         toast({ type: 'danger', title: 'Archivo no válido' })
       }
@@ -91,6 +107,25 @@ export default function Ajustes() {
               <Button variant="ghost" icon={LogOut} onClick={() => signOut()}>Cerrar sesión</Button>
             </div>
           </div>
+          {installEvt && (
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/25 bg-accent/[0.06] px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-ink">Instala Núcleo como app</p>
+                <p className="text-[13px] text-muted">Icono en tu pantalla de inicio, a un toque.</p>
+              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={async () => {
+                  installEvt.prompt()
+                  await installEvt.userChoice
+                  setInstallEvt(null)
+                }}
+              >
+                Instalar
+              </Button>
+            </div>
+          )}
         </Panel>
 
         {/* Perfil */}

@@ -14,7 +14,17 @@ export function MobileTabBar() {
   const items = main.map((id) => MODULES.find((m) => m.id === id))
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line glass pb-[env(safe-area-inset-bottom)] lg:hidden">
+    <>
+      {/* Botón flotante de nueva tarea */}
+      <button
+        onClick={() => setQuickAdd(true)}
+        aria-label="Nueva tarea"
+        className="fixed bottom-20 right-4 z-30 grid h-14 w-14 place-items-center rounded-2xl bg-accent text-accent-fg shadow-glow transition-transform active:scale-90 lg:hidden"
+        style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <Plus size={26} strokeWidth={2.4} />
+      </button>
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line glass pb-[env(safe-area-inset-bottom)] lg:hidden">
       {items.map((m) => {
         const Icon = ICONS[m.icon]
         const active = route === m.id
@@ -39,7 +49,8 @@ export function MobileTabBar() {
         <Menu size={21} />
         Más
       </button>
-    </nav>
+      </nav>
+    </>
   )
 }
 

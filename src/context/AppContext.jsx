@@ -13,6 +13,7 @@ const DEFAULT_SETTINGS = {
   direction: 'eclipse',
   accent: ACCENTS[0],
   salary: 0,
+  hideOnboarding: false,
   modules: MODULES.map((m) => ({ id: m.id, hidden: false })),
 }
 
@@ -32,7 +33,12 @@ export function AppProvider({ children }) {
   )
   const [toasts, setToasts] = useState([])
   const [navOpen, setNavOpen] = useState(false)
-  const [quickAdd, setQuickAdd] = useState(false)
+  // Modal global de tarea: null | { mode:'new' } | { mode:'edit', task }
+  const [taskModal, setTaskModal] = useState(null)
+  // Paleta de comandos (⌘K)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  // Temporizador de enfoque: null | { title, endsAt }
+  const [focus, setFocus] = useState(null)
   const themingTimer = useRef()
 
   useEffect(() => {
@@ -64,11 +70,11 @@ export function AppProvider({ children }) {
     location.hash = `#/${to}`
     setRoute(to)
     setNavOpen(false)
+    setPaletteOpen(false)
     document.querySelector('main')?.scrollTo({ top: 0 })
   }, [])
 
   const update = useCallback((patch) => setSettings((s) => ({ ...s, ...patch })), [])
-  // Hidratar ajustes desde el perfil de Supabase sin perder la forma por defecto
   const hydrateSettings = useCallback(
     (incoming) => setSettings((s) => ({ ...DEFAULT_SETTINGS, ...s, ...incoming })),
     []
@@ -77,10 +83,20 @@ export function AppProvider({ children }) {
   const toast = useCallback((opts) => {
     const t = typeof opts === 'string' ? { title: opts } : opts
     const id = uid()
-    setToasts((list) => [...list, { id, type: 'default', ...t }])
-    setTimeout(() => setToasts((list) => list.filter((x) => x.id !== id)), t.duration || 3800)
+    setToasts((list) => [...list.slice(-3), { id, type: 'default', ...t }])
+    setTimeout(() => setToasts((list) => list.filter((x) => x.id !== id)), t.duration || 4200)
   }, [])
   const dismissToast = useCallback((id) => setToasts((l) => l.filter((x) => x.id !== id)), [])
+
+  // API de tareas (compatible con el antiguo setQuickAdd)
+  const setQuickAdd = useCallback((v) => setTaskModal(v ? { mode: 'new' } : null), [])
+  const openTask = useCallback((task) => setTaskModal({ mode: 'edit', task }), [])
+
+  // Enfoque (pomodoro ligero)
+  const startFocus = useCallback((title, mins = 25) => {
+    setFocus({ title: title || 'Sesión de enfoque', endsAt: Date.now() + mins * 60000 })
+  }, [])
+  const stopFocus = useCallback(() => setFocus(null), [])
 
   const value = {
     settings,
@@ -91,8 +107,16 @@ export function AppProvider({ children }) {
     navigate,
     navOpen,
     setNavOpen,
-    quickAdd,
+    taskModal,
+    setTaskModal,
+    quickAdd: Boolean(taskModal),
     setQuickAdd,
+    openTask,
+    paletteOpen,
+    setPaletteOpen,
+    focus,
+    startFocus,
+    stopFocus,
     toasts,
     toast,
     dismissToast,

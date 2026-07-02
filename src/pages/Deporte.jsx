@@ -106,16 +106,18 @@ export default function Deporte() {
           <CardHeader title="Últimos entrenos" icon={Dumbbell} />
           <CardBody className="space-y-3 pt-3">
             {sortedWorkouts.length ? sortedWorkouts.slice(0, 8).map((w) => (
-              <div key={w.id} className="group rounded-xl border border-line bg-surface-2/40 p-4">
+              <div
+                key={w.id}
+                role="button"
+                onClick={() => setModal({ type: 'workout', row: w })}
+                className="group cursor-pointer rounded-xl border border-line bg-surface-2/40 p-4 transition-colors hover:border-line-strong"
+              >
                 <div className="mb-3 flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold text-ink">{w.name}</p>
                     <p className="text-2xs text-subtle">{relDay(w.date)}{w.dur ? ` · ${w.dur} min` : ''}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {w.exercises?.length > 0 && <Badge tone="accent">{w.exercises.length} ejercicios</Badge>}
-                    <button onClick={() => remove('workouts', w.id)} className="text-subtle opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"><Trash2 size={14} /></button>
-                  </div>
+                  {w.exercises?.length > 0 && <Badge tone="accent">{w.exercises.length} ejercicios</Badge>}
                 </div>
                 {w.exercises?.length > 0 && (
                   <div className="space-y-1.5">
@@ -160,8 +162,13 @@ export default function Deporte() {
         </div>
       </div>
 
-      {modal === 'workout' && (
-        <RecordModal open onClose={() => setModal(null)} title="Registrar entreno" subtitle="Marca tu sesión de hoy" table="workouts"
+      {(modal === 'workout' || modal?.type === 'workout') && (
+        <RecordModal open onClose={() => setModal(null)}
+          title={modal?.row ? 'Editar entreno' : 'Registrar entreno'}
+          subtitle={modal?.row ? undefined : 'Marca tu sesión de hoy'}
+          table="workouts"
+          initial={modal?.row}
+          onDelete={modal?.row ? () => remove('workouts', modal.row.id) : undefined}
           fields={[
             { key: 'name', label: 'Nombre', type: 'text', required: true, autoFocus: true, placeholder: 'Empuje, Carrera…', full: true },
             { key: 'date', label: 'Fecha', type: 'date', default: todayISO() },

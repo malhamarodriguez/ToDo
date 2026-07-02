@@ -13,6 +13,7 @@ export default function Diario() {
   const { journal, notes, add, remove } = useData()
   const [draft, setDraft] = useState('')
   const [entryOpen, setEntryOpen] = useState(false)
+  const [noteOpen, setNoteOpen] = useState(null)
 
   const sorted = [...journal].sort((a, b) => String(b.date).localeCompare(String(a.date)))
 
@@ -43,14 +44,11 @@ export default function Diario() {
                 return (
                   <div key={e.id} className="relative pl-7">
                     <span className="absolute left-0 top-2 grid h-3.5 w-3.5 place-items-center rounded-full border-2 border-accent bg-surface" />
-                    <Card hover className="group">
+                    <Card hover className="group cursor-pointer" role="button" onClick={() => setEntryOpen({ row: e })}>
                       <CardBody>
                         <div className="mb-2 flex items-center justify-between">
                           <span className="text-2xs font-semibold uppercase tracking-wide text-subtle">{relDay(e.date)}</span>
-                          <div className="flex items-center gap-2">
-                            <Badge tone={mood.tone} icon={MoodIcon}>{mood.label}</Badge>
-                            <button onClick={() => remove('journal', e.id)} className="text-subtle opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"><Trash2 size={13} /></button>
-                          </div>
+                          <Badge tone={mood.tone} icon={MoodIcon}>{mood.label}</Badge>
                         </div>
                         {e.title && <h3 className="text-[15px] font-semibold text-ink">{e.title}</h3>}
                         {e.body && <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{e.body}</p>}
@@ -77,13 +75,15 @@ export default function Diario() {
           {notes.length ? (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {notes.map((n) => (
-                <div key={n.id} className="group relative overflow-hidden rounded-xl border border-line bg-surface p-4" style={{ borderLeft: `3px solid hsl(${n.color})` }}>
-                  <div className="mb-2 flex items-center justify-between">
-                    <StickyNote size={15} style={{ color: `hsl(${n.color})` }} />
-                    <button onClick={() => remove('notes', n.id)} className="text-subtle opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"><Trash2 size={13} /></button>
-                  </div>
+                <button
+                  key={n.id}
+                  onClick={() => setNoteOpen(n)}
+                  className="group relative overflow-hidden rounded-xl border border-line bg-surface p-4 text-left transition-colors hover:border-line-strong"
+                  style={{ borderLeft: `3px solid hsl(${n.color})` }}
+                >
+                  <StickyNote size={15} className="mb-2" style={{ color: `hsl(${n.color})` }} />
                   <p className="text-[13px] leading-relaxed text-ink">{n.text}</p>
-                </div>
+                </button>
               ))}
             </div>
           ) : <p className="px-1 text-[13px] text-subtle">Tus notas aparecerán aquí.</p>}
@@ -91,12 +91,28 @@ export default function Diario() {
       </div>
 
       {entryOpen && (
-        <RecordModal open onClose={() => setEntryOpen(false)} title="Nueva entrada" subtitle="¿Cómo ha ido el día?" table="journal"
+        <RecordModal open onClose={() => setEntryOpen(false)}
+          title={entryOpen.row ? 'Editar entrada' : 'Nueva entrada'}
+          subtitle="¿Cómo ha ido el día?"
+          table="journal"
+          initial={entryOpen.row}
+          onDelete={entryOpen.row ? () => remove('journal', entryOpen.row.id) : undefined}
           fields={[
             { key: 'date', label: 'Fecha', type: 'date', default: todayISO() },
             { key: 'mood', label: 'Ánimo', type: 'select', options: Object.entries(MOODS).map(([v, m]) => ({ value: v, label: m.label })) },
             { key: 'title', label: 'Título', type: 'text', full: true, placeholder: 'Un titular para hoy' },
             { key: 'body', label: 'Notas', type: 'textarea', placeholder: 'Qué pasó, qué aprendiste…' },
+          ]} />
+      )}
+      {noteOpen && (
+        <RecordModal open onClose={() => setNoteOpen(null)}
+          title="Editar nota"
+          table="notes"
+          initial={noteOpen}
+          onDelete={() => remove('notes', noteOpen.id)}
+          fields={[
+            { key: 'text', label: 'Nota', type: 'textarea', required: true, autoFocus: true },
+            { key: 'color', label: 'Color', type: 'color' },
           ]} />
       )}
     </PageContainer>

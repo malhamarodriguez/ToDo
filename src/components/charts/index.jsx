@@ -73,7 +73,7 @@ export function TrendArea({ data, xKey = 'm', series = [], fmt, height = 240, gr
             dataKey={s.key}
             name={s.name}
             stroke={s.color || c.accent}
-            strokeWidth={2.4}
+            strokeWidth={2}
             fill={`url(#${ids[i]})`}
             dot={false}
             activeDot={{ r: 4, strokeWidth: 2, stroke: c.surface }}
@@ -94,7 +94,7 @@ export function GroupedBars({ data, xKey = 'm', series = [], fmt, height = 240 }
         <YAxis {...axisProps(c)} width={48} tickFormatter={(v) => (fmt ? fmt(v) : v)} />
         <Tooltip cursor={{ fill: c.accentSoft }} content={<ChartTooltip fmt={fmt} />} />
         {series.map((s) => (
-          <Bar key={s.key} dataKey={s.key} name={s.name} fill={s.color || c.accent} radius={[5, 5, 0, 0]} maxBarSize={26} />
+          <Bar key={s.key} dataKey={s.key} name={s.name} fill={s.color || c.accent} radius={[4, 4, 0, 0]} maxBarSize={26} />
         ))}
       </BarChart>
     </ResponsiveContainer>
@@ -114,7 +114,8 @@ export function DonutChart({ data, fmt, height = 200, inner = 58, outer = 84, ch
             innerRadius={inner}
             outerRadius={outer}
             paddingAngle={2}
-            stroke="none"
+            stroke={c.surface}
+            strokeWidth={2}
           >
             {data.map((d, i) => (
               <Cell key={i} fill={d.color ? `hsl(${d.color})` : c.accent} />

@@ -1,6 +1,6 @@
-import { Search, Bell, Sun, Moon, Menu, Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Search, Sun, Moon, Menu, Plus, Timer, X, WifiOff } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import { MODULES } from '../../lib/data'
 import { Mark } from './Logo'
 import { Button, Kbd, Tooltip } from '../ui'
 import { resolveMode } from '../../lib/theme'
@@ -16,14 +16,66 @@ const TITLES = {
   ajustes: 'Ajustes',
 }
 
+function FocusChip() {
+  const { focus, stopFocus, toast } = useApp()
+  const [, tick] = useState(0)
+  useEffect(() => {
+    if (!focus) return
+    const id = setInterval(() => tick((n) => n + 1), 1000)
+    return () => clearInterval(id)
+  }, [focus])
+  useEffect(() => {
+    if (focus && focus.endsAt - Date.now() <= 0) {
+      stopFocus()
+      toast({ type: 'success', title: '¡Sesión de enfoque completada!', desc: focus.title })
+    }
+  })
+  if (!focus) return null
+  const left = Math.max(0, focus.endsAt - Date.now())
+  const mm = String(Math.floor(left / 60000)).padStart(2, '0')
+  const ss = String(Math.floor((left % 60000) / 1000)).padStart(2, '0')
+  return (
+    <div className="flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 py-1 pl-2.5 pr-1 text-[13px] font-semibold text-accent">
+      <Timer size={14} className="animate-pulse" />
+      <span className="tabular">{mm}:{ss}</span>
+      <button
+        onClick={stopFocus}
+        className="grid h-6 w-6 place-items-center rounded-full text-accent transition-colors hover:bg-accent/15"
+        aria-label="Parar enfoque"
+      >
+        <X size={13} />
+      </button>
+    </div>
+  )
+}
+
+function OfflineChip() {
+  const [online, setOnline] = useState(navigator.onLine)
+  useEffect(() => {
+    const on = () => setOnline(true)
+    const off = () => setOnline(false)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
+    return () => {
+      window.removeEventListener('online', on)
+      window.removeEventListener('offline', off)
+    }
+  }, [])
+  if (online) return null
+  return (
+    <span className="flex items-center gap-1.5 rounded-full border border-warning/30 bg-warning/12 px-2.5 py-1 text-2xs font-semibold text-warning">
+      <WifiOff size={12} /> Sin conexión
+    </span>
+  )
+}
+
 export function Topbar() {
-  const { route, settings, update, setNavOpen, setQuickAdd } = useApp()
+  const { route, settings, update, setNavOpen, setQuickAdd, setPaletteOpen } = useApp()
   const mode = resolveMode(settings.mode)
   const toggleMode = () => update({ mode: mode === 'dark' ? 'light' : 'dark' })
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line glass px-4 sm:px-6">
-      {/* Móvil: menú + marca */}
       <button
         onClick={() => setNavOpen(true)}
         className="grid h-10 w-10 place-items-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-ink lg:hidden"
@@ -34,56 +86,50 @@ export function Topbar() {
         <Mark size={26} />
       </div>
 
-      <h1 className="hidden text-[15px] font-semibold text-ink lg:block">
-        {TITLES[route] || 'Núcleo'}
-      </h1>
+      <h1 className="text-[15px] font-semibold text-ink">{TITLES[route] || 'Núcleo'}</h1>
 
-      {/* Búsqueda */}
-      <div className="ml-auto flex flex-1 items-center justify-end gap-2 sm:ml-6 sm:justify-between">
-        <label className="group relative hidden max-w-md flex-1 items-center sm:flex">
-          <Search size={16} className="pointer-events-none absolute left-3 text-subtle" />
-          <input
-            placeholder="Buscar tareas, clientes, notas…"
-            className="h-10 w-full rounded-lg border border-line bg-surface-2/70 pl-9 pr-16 text-sm text-ink placeholder:text-subtle transition-all focus:border-accent/50 focus:bg-surface focus:outline-none focus:ring-4 focus:ring-accent/10"
-          />
-          <span className="absolute right-2.5 hidden items-center gap-1 md:flex">
+      <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <OfflineChip />
+        <FocusChip />
+
+        {/* Buscador → paleta de comandos */}
+        <button
+          onClick={() => setPaletteOpen(true)}
+          className="group hidden h-10 w-64 items-center gap-2.5 rounded-lg border border-line bg-surface-2/70 px-3 text-sm text-subtle transition-all hover:border-line-strong hover:text-muted sm:flex"
+        >
+          <Search size={15} />
+          <span className="flex-1 text-left">Buscar o ejecutar…</span>
+          <span className="flex items-center gap-1">
             <Kbd>⌘</Kbd>
             <Kbd>K</Kbd>
           </span>
-        </label>
+        </button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="sm:hidden"
+          icon={Search}
+          onClick={() => setPaletteOpen(true)}
+          aria-label="Buscar"
+        />
 
-        <div className="flex items-center gap-1.5">
+        <Tooltip label={mode === 'dark' ? 'Modo claro' : 'Modo oscuro'}>
           <Button
             variant="ghost"
             size="icon-sm"
-            className="sm:hidden"
-            icon={Search}
-            aria-label="Buscar"
+            icon={mode === 'dark' ? Sun : Moon}
+            onClick={toggleMode}
+            aria-label="Cambiar tema"
           />
-          <Tooltip label={mode === 'dark' ? 'Modo claro' : 'Modo oscuro'}>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              icon={mode === 'dark' ? Sun : Moon}
-              onClick={toggleMode}
-              aria-label="Cambiar tema"
-            />
-          </Tooltip>
-          <Tooltip label="Notificaciones">
-            <button className="relative grid h-8 w-8 place-items-center rounded-md text-muted transition-colors hover:bg-surface-2 hover:text-ink">
-              <Bell size={18} />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent ring-2 ring-surface" />
-            </button>
-          </Tooltip>
-          <Button
-            variant="primary"
-            size="icon-sm"
-            icon={Plus}
-            className="sm:hidden"
-            onClick={() => setQuickAdd(true)}
-            aria-label="Nueva tarea"
-          />
-        </div>
+        </Tooltip>
+        <Button
+          variant="primary"
+          size="icon-sm"
+          icon={Plus}
+          className="sm:hidden"
+          onClick={() => setQuickAdd(true)}
+          aria-label="Nueva tarea"
+        />
       </div>
     </header>
   )

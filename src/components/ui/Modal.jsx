@@ -29,7 +29,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
         aria-modal="true"
         className={cx(
           'relative w-full rounded-t-2xl border border-line bg-surface shadow-xl sm:rounded-2xl',
-          'animate-scale-in',
+          'animate-slide-up sm:animate-scale-in',
           max
         )}
       >
