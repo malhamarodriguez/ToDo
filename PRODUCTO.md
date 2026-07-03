@@ -29,25 +29,46 @@ update public.profiles set plan = 'pro'
 where id = (select id from auth.users where email = 'TU_EMAIL_AQUI');
 ```
 
-## 2) Cobrar con Stripe (cuando quieras encender ingresos)
+## 2) Cobrar con Stripe — pasos exactos
 
-La vía sin servidor propio: **Payment Links + un webhook en Supabase Edge Functions**.
+Todo el código ya está listo en el repo:
+`supabase/functions/stripe-webhook/index.ts` (webhook) y `src/lib/billing.js`
+(enlaces de pago). El flujo queda: pago → webhook → `plan='pro'` → la app desbloquea.
 
-1. Crea cuenta en stripe.com → Productos → "Núcleo Pro" (4,99 €/mes y 49 €/año)
-   → genera un **Payment Link** de cada uno.
-2. En el Payment Link, activa "Recoger email" (se usa para casar con la cuenta).
-3. Supabase → **Edge Functions** → nueva función `stripe-webhook` con esta lógica:
-   - verifica la firma del evento (`STRIPE_WEBHOOK_SECRET`),
-   - en `checkout.session.completed` / `customer.subscription.updated`:
-     busca el usuario por email y `update profiles set plan='pro'`,
-   - en `customer.subscription.deleted`: vuelve a `free`.
-   (Usa la **service_role key** como secreto de la función; nunca en el frontend.)
-4. Stripe → Developers → Webhooks → apunta al URL de la función.
-5. En la app, sustituye el aviso "Pro llega muy pronto" del `UpgradeModal`
-   por `window.open(PAYMENT_LINK)` — un cambio de una línea que hago cuando tengas
-   los enlaces.
+**A. SQL (una vez):**
 
-Con esto el ciclo queda cerrado: pago → webhook → `plan='pro'` → la app desbloquea.
+```sql
+alter table public.profiles
+  add column if not exists stripe_customer_id text;
+```
+
+**B. Stripe (stripe.com):**
+1. Crea la cuenta (modo test primero si quieres probar).
+2. *Product catalog → Add product*: "Núcleo Pro" con 2 precios recurrentes:
+   4,99 €/mes y 49 €/año. Opcional: prueba gratis de 14 días en el precio.
+3. *Payment Links → New*: uno por precio. En cada link, en "After payment"
+   pon la URL de la app como redirección.
+4. Copia los 2 enlaces `https://buy.stripe.com/…`.
+
+**C. Supabase (supabase.com → tu proyecto):**
+1. *Edge Functions → Deploy new function* → nombre `stripe-webhook` →
+   pega el contenido de `supabase/functions/stripe-webhook/index.ts` → Deploy.
+2. En los detalles de la función, **desactiva "Enforce JWT verification"**.
+3. Copia la URL de la función (`https://<ref>.supabase.co/functions/v1/stripe-webhook`).
+
+**D. Conectar ambos:**
+1. Stripe → *Developers → Webhooks → Add endpoint* → pega la URL de la función.
+   Eventos: `checkout.session.completed`, `customer.subscription.updated`,
+   `customer.subscription.deleted`.
+2. Copia el **Signing secret** (`whsec_…`) → Supabase → *Edge Functions →
+   Secrets* → crea `STRIPE_WEBHOOK_SECRET` con ese valor.
+
+**E. Enlaces en la app:** pega los 2 Payment Links en `src/lib/billing.js`
+(o pásaselos a Claude y los publica). La app añade sola el email del usuario
+y su referencia al checkout, para que el webhook active el plan sin ambigüedad.
+
+> Nunca compartas la *service role key* ni el *signing secret* fuera de
+> Supabase. Los Payment Links sí son públicos.
 
 ## 3) Dominio propio (~10 €/año)
 

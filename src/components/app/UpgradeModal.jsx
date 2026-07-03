@@ -1,13 +1,33 @@
 import { Check, Sparkles } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
+import { useAuth } from '../../context/AuthContext'
 import { PRO_FEATURES, PRO_PRICE } from '../../lib/plan'
+import { checkoutUrl, billingReady } from '../../lib/billing'
 import { Modal, Button, Badge } from '../ui'
 
 export function UpgradeModal() {
   const { upgradeOpen, setUpgradeOpen, toast } = useApp()
+  const { user } = useAuth()
   if (!upgradeOpen) return null
   const close = () => setUpgradeOpen(false)
   const reason = typeof upgradeOpen === 'string' ? upgradeOpen : null
+
+  const goCheckout = (kind) => {
+    const url = checkoutUrl(kind, user)
+    if (url) {
+      window.open(url, '_blank', 'noopener')
+      toast({
+        type: 'info',
+        title: 'Pago abierto en otra pestaña',
+        desc: 'Al completarlo, tu cuenta pasa a Pro automáticamente.',
+        duration: 6000,
+      })
+      close()
+    } else {
+      toast({ type: 'info', title: 'Pro llega muy pronto', desc: 'Los pagos se activarán en breve. ¡Gracias por el interés!' })
+      close()
+    }
+  }
 
   return (
     <Modal
@@ -18,14 +38,7 @@ export function UpgradeModal() {
       footer={
         <>
           <Button variant="ghost" onClick={close}>Seguir en Gratis</Button>
-          <Button
-            variant="primary"
-            icon={Sparkles}
-            onClick={() => {
-              toast({ type: 'info', title: 'Pro llega muy pronto', desc: 'Los pagos se activarán en breve. ¡Gracias por el interés!' })
-              close()
-            }}
-          >
+          <Button variant="primary" icon={Sparkles} onClick={() => goCheckout('monthly')}>
             Mejorar a Pro
           </Button>
         </>
@@ -37,7 +50,12 @@ export function UpgradeModal() {
             <span className="font-display text-3xl font-bold tabular text-ink">{PRO_PRICE.monthly}</span>
             <span className="text-sm text-muted">/ mes</span>
           </div>
-          <p className="mt-0.5 text-2xs text-subtle">o {PRO_PRICE.yearly}/año (2 meses gratis)</p>
+          <button
+            onClick={() => goCheckout('yearly')}
+            className="mt-0.5 text-2xs text-subtle underline-offset-2 transition-colors hover:text-accent hover:underline"
+          >
+            o {PRO_PRICE.yearly}/año (2 meses gratis) →
+          </button>
         </div>
         <Badge tone="accent" className="mb-1 ml-auto">14 días de prueba</Badge>
       </div>
@@ -51,6 +69,11 @@ export function UpgradeModal() {
           </li>
         ))}
       </ul>
+      {!billingReady() && (
+        <p className="mt-4 rounded-lg bg-surface-2 px-3 py-2 text-2xs text-subtle">
+          Los pagos se están activando — de momento puedes apuntarte pulsando el botón.
+        </p>
+      )}
     </Modal>
   )
 }
