@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
-import { MODULES } from '../../lib/data'
+import { MODULES, moduleName } from '../../lib/data'
 import { ICONS } from '../layout/icons'
 import { Kbd } from '../ui'
 import { cx } from '../../lib/utils'
@@ -70,9 +70,10 @@ export function CommandPalette() {
     // Navegación
     const visible = settings.modules.filter((m) => !m.hidden).map((m) => m.id)
     MODULES.filter((m) => visible.includes(m.id)).forEach((m) => {
-      if (match(m.name)) {
+      const label = moduleName(settings, m.id)
+      if (match(label) || match(m.name)) {
         const Icon = ICONS[m.icon]
-        out.push({ icon: Icon, label: `Ir a ${m.name}`, hint: 'Navegar', group: 'Navegación', run: () => navigate(m.id) })
+        out.push({ icon: Icon, label: `Ir a ${label}`, hint: 'Navegar', group: 'Navegación', run: () => navigate(m.id) })
       }
     })
     if (match('ajustes')) {

@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react'
-import { Search, Sun, Moon, Menu, Plus, Timer, X, WifiOff } from 'lucide-react'
+import { Search, Sun, Moon, Menu, Plus, Timer, X, WifiOff, Eye, EyeOff } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
+import { moduleName } from '../../lib/data'
 import { Mark } from './Logo'
 import { Button, Kbd, Tooltip } from '../ui'
 import { resolveMode } from '../../lib/theme'
 
-const TITLES = {
-  inicio: 'Panel central',
-  negocio: 'Negocio',
-  finanzas: 'Finanzas',
-  deporte: 'Deporte',
-  metas: 'Metas',
-  diario: 'Diario',
-  calendario: 'Calendario',
-  ajustes: 'Ajustes',
+const MODULE_ROUTES = ['negocio', 'finanzas', 'deporte', 'metas', 'diario', 'calendario']
+function titleFor(route, settings) {
+  if (route === 'inicio' || !route) return 'Panel central'
+  if (route === 'ajustes') return 'Ajustes'
+  if (route === 'informe') return 'Informe mensual'
+  if (MODULE_ROUTES.includes(route)) return moduleName(settings, route)
+  return 'Núcleo'
 }
 
 function FocusChip() {
@@ -86,7 +85,7 @@ export function Topbar() {
         <Mark size={26} />
       </div>
 
-      <h1 className="text-[15px] font-semibold text-ink">{TITLES[route] || 'Núcleo'}</h1>
+      <h1 className="text-[15px] font-semibold text-ink">{titleFor(route, settings)}</h1>
 
       <div className="ml-auto flex items-center gap-2 sm:gap-3">
         <OfflineChip />
@@ -113,6 +112,16 @@ export function Topbar() {
           aria-label="Buscar"
         />
 
+        <Tooltip label={settings.privacy ? 'Mostrar cantidades' : 'Ocultar cantidades'}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            icon={settings.privacy ? EyeOff : Eye}
+            onClick={() => update({ privacy: !settings.privacy })}
+            aria-label="Modo privacidad"
+            className={settings.privacy ? 'text-accent' : undefined}
+          />
+        </Tooltip>
         <Tooltip label={mode === 'dark' ? 'Modo claro' : 'Modo oscuro'}>
           <Button
             variant="ghost"

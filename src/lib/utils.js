@@ -7,21 +7,26 @@ export function cx(...args) {
     .join(' ')
 }
 
-const EUR = new Intl.NumberFormat('es-ES', {
-  style: 'currency',
-  currency: 'EUR',
-  maximumFractionDigits: 0,
-})
-const EUR2 = new Intl.NumberFormat('es-ES', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
-export const eur = (n) => EUR.format(n)
-export const eur2 = (n) => EUR2.format(n)
-export const signedEur = (n) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${EUR.format(Math.abs(n))}`
+// Dinero configurable: moneda del usuario + modo privacidad (oculta cantidades).
+let MONEY = { currency: 'EUR', privacy: false }
+const fmtCache = {}
+function moneyFmt(min, max) {
+  const k = `${MONEY.currency}-${min}-${max}`
+  return (fmtCache[k] ||= new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: MONEY.currency,
+    minimumFractionDigits: min,
+    maximumFractionDigits: max,
+  }))
+}
+export const configureMoney = (c) => {
+  MONEY = { ...MONEY, ...c }
+}
+const HIDDEN = '•••••'
+export const eur = (n) => (MONEY.privacy ? HIDDEN : moneyFmt(0, 0).format(n))
+export const eur2 = (n) => (MONEY.privacy ? HIDDEN : moneyFmt(2, 2).format(n))
+export const signedEur = (n) =>
+  MONEY.privacy ? HIDDEN : `${n > 0 ? '+' : n < 0 ? '−' : ''}${moneyFmt(0, 0).format(Math.abs(n))}`
 
 export const pct = (n) => `${Math.round(n)}%`
 

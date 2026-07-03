@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { ACCENTS, applyTheme, resolveMode } from '../lib/theme'
-import { MODULES } from '../lib/data'
-import { uid } from '../lib/utils'
+import { MODULES, HOME_WIDGETS } from '../lib/data'
+import { uid, configureMoney } from '../lib/utils'
+
+const FONT_SCALES = { sm: '14.5px', md: '16px', lg: '17.5px' }
 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
@@ -9,12 +11,20 @@ export const useApp = () => useContext(AppCtx)
 const DEFAULT_SETTINGS = {
   name: '',
   role: '',
+  motto: '',
   mode: 'dark',
   direction: 'eclipse',
   accent: ACCENTS[0],
   salary: 0,
   hideOnboarding: false,
   modules: MODULES.map((m) => ({ id: m.id, hidden: false })),
+  // Personalización
+  moduleNames: {}, // { negocio: 'Estudios', ... }
+  homeWidgets: HOME_WIDGETS.map((w) => ({ id: w.id, hidden: false })),
+  fontScale: 'md', // sm | md | lg
+  currency: 'EUR',
+  privacy: false, // ocultar cantidades
+  startModule: 'inicio',
 }
 
 function loadSettings() {
@@ -49,12 +59,26 @@ export function AppProvider({ children }) {
     localStorage.setItem('nucleo:settings', JSON.stringify(settings))
     document.documentElement.classList.add('theming')
     applyTheme(settings)
+    // Preferencias personales: tamaño de texto, moneda y privacidad
+    document.documentElement.style.fontSize = FONT_SCALES[settings.fontScale] || FONT_SCALES.md
+    configureMoney({ currency: settings.currency || 'EUR', privacy: Boolean(settings.privacy) })
     clearTimeout(themingTimer.current)
     themingTimer.current = setTimeout(
       () => document.documentElement.classList.remove('theming'),
       400
     )
   }, [settings])
+
+  // Pantalla inicial configurable (solo si se abre sin ruta)
+  const startApplied = useRef(false)
+  useEffect(() => {
+    if (startApplied.current) return
+    startApplied.current = true
+    const raw = location.hash.replace('#/', '')
+    if (!raw && settings.startModule && settings.startModule !== 'inicio') {
+      navigate(settings.startModule)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (settings.mode !== 'system') return

@@ -124,6 +124,9 @@ export default function Inicio() {
 
   const homeGoals = goals.slice(0, 3)
 
+  // Bloques del Inicio configurables (Ajustes → Inicio a tu medida)
+  const showW = (id) => !(settings.homeWidgets || []).find((w) => w.id === id)?.hidden
+
   const isSunday = new Date().getDay() === 0
   const QUICK = [
     { id: 'task', label: 'Nueva tarea', icon: Plus, run: () => setQuickAdd(true) },
@@ -152,11 +155,15 @@ export default function Inicio() {
             )}
           </span>
         </p>
+        {settings.motto && (
+          <p className="mt-2 text-[13px] italic text-subtle">“{settings.motto}”</p>
+        )}
       </div>
 
-      <Onboarding />
+      {showW('onboarding') && <Onboarding />}
 
       {/* Accesos rápidos */}
+      {showW('quick') && (
       <div className="mb-6 flex flex-wrap gap-2.5 animate-fade-up" style={{ animationDelay: '40ms' }}>
         {QUICK.map((q) => (
           <Button
@@ -173,11 +180,12 @@ export default function Inicio() {
           </Button>
         ))}
       </div>
+      )}
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         <div className="space-y-5 lg:col-span-8">
           {/* Enfoque de hoy */}
-          {focusTask && !focus && (
+          {showW('focus') && focusTask && !focus && (
             <Card className="overflow-hidden border-accent/25 bg-accent/[0.04] animate-fade-up" style={{ animationDelay: '60ms' }}>
               <CardBody className="flex items-center gap-4">
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent/14 text-accent">
@@ -195,6 +203,7 @@ export default function Inicio() {
           )}
 
           {/* Tareas de hoy */}
+          {showW('tasks') && (
           <Card elevated className="overflow-hidden animate-fade-up" style={{ animationDelay: '80ms' }}>
             <div className="border-b border-line px-5 py-4">
               <div className="flex items-center justify-between">
@@ -259,10 +268,12 @@ export default function Inicio() {
               </button>
             </div>
           </Card>
+          )}
         </div>
 
         {/* Rail derecho */}
         <div className="space-y-5 lg:col-span-4">
+          {showW('workout') && (
           <Card
             className={cx(
               'overflow-hidden animate-fade-up transition-colors duration-300',
@@ -290,7 +301,9 @@ export default function Inicio() {
               <Switch checked={entrenoHoy} onChange={toggleEntreno} size="lg" />
             </CardBody>
           </Card>
+          )}
 
+          {showW('agenda') && (
           <Card className="animate-fade-up" style={{ animationDelay: '160ms' }}>
             <CardHeader
               title="Agenda de hoy"
@@ -314,7 +327,9 @@ export default function Inicio() {
               )}
             </CardBody>
           </Card>
+          )}
 
+          {showW('goals') && (
           <Card className="animate-fade-up" style={{ animationDelay: '200ms' }}>
             <CardHeader
               title="Metas"
@@ -340,10 +355,12 @@ export default function Inicio() {
               )}
             </CardBody>
           </Card>
+          )}
         </div>
       </div>
 
       {/* Franja financiera */}
+      {showW('finance') && (
       <div
         className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-2 rounded-xl border border-line bg-surface/50 px-5 py-3.5 text-[13px] animate-fade-up"
         style={{ animationDelay: '240ms' }}
@@ -374,6 +391,7 @@ export default function Inicio() {
           Ver finanzas <ArrowRight size={14} />
         </button>
       </div>
+      )}
     </PageContainer>
   )
 }

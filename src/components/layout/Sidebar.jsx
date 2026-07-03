@@ -1,7 +1,7 @@
 import { Settings, Plus } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
-import { MODULES } from '../../lib/data'
+import { MODULES, moduleName } from '../../lib/data'
 import { ICONS } from './icons'
 import { Logo } from './Logo'
 import { Avatar, Button } from '../ui'
@@ -25,7 +25,7 @@ function NavItem({ mod, active, onClick }) {
         strokeWidth={active ? 2.4 : 2}
         className={cx('shrink-0 transition-transform duration-200', !active && 'group-hover:scale-110')}
       />
-      <span>{mod.name}</span>
+      <span>{mod.label}</span>
     </button>
   )
 }
@@ -43,7 +43,10 @@ export function Sidebar() {
   )
   const mods = settings.modules
     .filter((m) => !m.hidden)
-    .map((m) => MODULES.find((x) => x.id === m.id))
+    .map((m) => {
+      const base = MODULES.find((x) => x.id === m.id)
+      return base && { ...base, label: moduleName(settings, m.id) }
+    })
     .filter(Boolean)
 
   return (

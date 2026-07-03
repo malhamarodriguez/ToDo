@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom'
 import { Menu, Settings, X, Plus } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import { MODULES } from '../../lib/data'
+import { MODULES, moduleName } from '../../lib/data'
 import { ICONS } from './icons'
 import { Logo } from './Logo'
 import { Avatar } from '../ui'
@@ -38,7 +38,7 @@ export function MobileTabBar() {
             )}
           >
             <Icon size={21} strokeWidth={active ? 2.4 : 2} />
-            {m.name}
+            {moduleName(settings, m.id)}
           </button>
         )
       })}
@@ -89,7 +89,7 @@ export function MobileDrawer() {
                 )}
               >
                 <Icon size={20} strokeWidth={active ? 2.4 : 2} />
-                {m.name}
+                {moduleName(settings, m.id)}
               </button>
             )
           })}

@@ -62,3 +62,22 @@ export const MODULES = [
   { id: 'diario', name: 'Diario', icon: 'NotebookPen' },
   { id: 'calendario', name: 'Calendario', icon: 'Calendar' },
 ]
+
+// Nombre de módulo personalizado por el usuario ("Negocio" → "Estudios"…)
+export const moduleName = (settings, id) => {
+  const custom = settings?.moduleNames?.[id]
+  if (custom && String(custom).trim()) return String(custom).trim()
+  return MODULES.find((m) => m.id === id)?.name || id
+}
+
+// Bloques del Inicio que se pueden mostrar/ocultar
+export const HOME_WIDGETS = [
+  { id: 'onboarding', label: 'Primeros pasos' },
+  { id: 'quick', label: 'Accesos rápidos' },
+  { id: 'focus', label: 'Enfoque de hoy' },
+  { id: 'tasks', label: 'Tareas de hoy' },
+  { id: 'workout', label: 'Entreno de hoy' },
+  { id: 'agenda', label: 'Agenda de hoy' },
+  { id: 'goals', label: 'Metas' },
+  { id: 'finance', label: 'Franja financiera' },
+]
