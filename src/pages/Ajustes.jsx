@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import { useData, TABLES } from '../context/DataContext'
 import { FREE_LIMITS } from '../lib/plan'
 import { ACCENTS, DIRECTIONS, customAccent } from '../lib/theme'
-import { MODULES, HOME_WIDGETS, moduleName } from '../lib/data'
+import { MODULES, HOME_WIDGETS, QUICK_ACTIONS, ICON_CHOICES, moduleName, moduleIcon } from '../lib/data'
 import { ICONS } from '../components/layout/icons'
 import { PageContainer, PageHeader } from '../components/layout/Page'
 import { Card, CardHeader, CardBody, Button, Input, Label, Segmented, Switch, Select, SectionTitle } from '../components/ui'
@@ -235,6 +235,29 @@ export default function Ajustes() {
               )
             })}
           </div>
+          <p className="mb-2 mt-5 text-2xs font-semibold uppercase tracking-[0.12em] text-subtle">Accesos rápidos</p>
+          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+            {QUICK_ACTIONS.map((qa) => {
+              const conf = (settings.quickActions || []).find((x) => x.id === qa.id)
+              const visible = !conf?.hidden
+              return (
+                <label key={qa.id} className="flex cursor-pointer items-center justify-between rounded-lg border border-line bg-surface-2/50 px-3.5 py-2.5">
+                  <span className={cx('text-sm', visible ? 'text-ink' : 'text-subtle')}>{qa.label}</span>
+                  <Switch
+                    checked={visible}
+                    onChange={() => {
+                      const list = QUICK_ACTIONS.map((x) => {
+                        const cur = (settings.quickActions || []).find((y) => y.id === x.id)
+                        const hidden = x.id === qa.id ? visible : Boolean(cur?.hidden)
+                        return { id: x.id, hidden }
+                      })
+                      update({ quickActions: list })
+                    }}
+                  />
+                </label>
+              )
+            })}
+          </div>
         </Panel>
 
         {/* Dirección visual — las dos direcciones */}
@@ -331,7 +354,7 @@ export default function Ajustes() {
           <div className="divide-y divide-line">
             {settings.modules.map((m, i) => {
               const meta = MODULES.find((x) => x.id === m.id)
-              const Icon = ICONS[meta.icon]
+              const Icon = ICONS[moduleIcon(settings, m.id)]
               return (
                 <div key={m.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
                   <div className="flex flex-col">
@@ -350,9 +373,17 @@ export default function Ajustes() {
                       <ChevronDown size={15} />
                     </button>
                   </div>
-                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-surface-2 text-muted">
+                  <button
+                    title="Clic para cambiar el icono"
+                    onClick={() => {
+                      const cur = moduleIcon(settings, m.id)
+                      const next = ICON_CHOICES[(ICON_CHOICES.indexOf(cur) + 1) % ICON_CHOICES.length]
+                      update({ moduleIcons: { ...(settings.moduleIcons || {}), [m.id]: next } })
+                    }}
+                    className="grid h-8 w-8 place-items-center rounded-lg bg-surface-2 text-muted transition-all hover:scale-110 hover:text-accent"
+                  >
                     <Icon size={16} />
-                  </span>
+                  </button>
                   <input
                     value={settings.moduleNames?.[m.id] ?? ''}
                     placeholder={meta.name}

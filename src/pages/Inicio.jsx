@@ -1,7 +1,11 @@
+import { useState } from 'react'
 import {
   Plus, Receipt, PenLine, Dumbbell, ArrowRight, Check, ChevronRight,
-  Wallet, TrendingUp, CalendarClock, Target, Play, Timer, X, Sparkles, Banknote,
+  Wallet, TrendingUp, CalendarClock, Target, Play, Timer, X, Sparkles, Banknote, Flame,
 } from 'lucide-react'
+import { toggleHabitLog, habitStreak, habitWeek, habitDoneOn, HABIT_COLORS } from '../lib/habits'
+import { canCreate } from '../lib/plan'
+import { uid, todayISO as tISO } from '../lib/utils'
 import { useApp } from '../context/AppContext'
 import { useData } from '../context/DataContext'
 import { PageContainer } from '../components/layout/Page'
@@ -89,6 +93,93 @@ function Onboarding() {
   )
 }
 
+// ---------- Hábitos personalizados ----------
+function HabitsWidget() {
+  const { settings, update, toast, setUpgradeOpen } = useApp()
+  const { isPro } = useData()
+  const [draft, setDraft] = useState('')
+  const habits = settings.habits || []
+  const log = settings.habitLog || {}
+
+  const addHabit = () => {
+    const name = draft.trim()
+    if (!name) return
+    if (!isPro && habits.length >= 3) {
+      return setUpgradeOpen('El plan Gratis incluye 3 hábitos — pasa a Pro para crear ilimitados.')
+    }
+    update({ habits: [...habits, { id: uid(), name, color: HABIT_COLORS[habits.length % HABIT_COLORS.length] }] })
+    setDraft('')
+    toast({ type: 'success', title: 'Hábito creado', desc: name })
+  }
+  const removeHabit = (id) => update({ habits: habits.filter((h) => h.id !== id) })
+  const toggle = (id) => update({ habitLog: toggleHabitLog(log, id) })
+
+  return (
+    <Card className="animate-fade-up" style={{ animationDelay: '140ms' }}>
+      <CardHeader title="Hábitos" subtitle={habits.length ? 'Constancia diaria' : 'Crea el primero'} icon={Flame} />
+      <CardBody className="space-y-1 pt-2">
+        {habits.map((h) => {
+          const done = habitDoneOn(log, tISO(), h.id)
+          const streak = habitStreak(log, h.id)
+          return (
+            <div key={h.id} className="group flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-surface-2">
+              <button
+                onClick={() => toggle(h.id)}
+                aria-label={h.name}
+                className={cx(
+                  'grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 transition-all duration-200',
+                  done ? 'scale-100' : 'hover:scale-105'
+                )}
+                style={{
+                  borderColor: `hsl(${h.color})`,
+                  background: done ? `hsl(${h.color})` : 'transparent',
+                  color: done ? 'white' : 'transparent',
+                }}
+              >
+                <Check size={14} strokeWidth={3} />
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className={cx('truncate text-[13px] font-medium', done ? 'text-ink' : 'text-muted')}>{h.name}</p>
+                <div className="mt-1 flex items-center gap-1">
+                  {habitWeek(log, h.id).map((d) => (
+                    <span
+                      key={d.iso}
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ background: d.done ? `hsl(${h.color})` : 'hsl(var(--border))' }}
+                    />
+                  ))}
+                </div>
+              </div>
+              {streak > 0 && (
+                <span className="flex shrink-0 items-center gap-0.5 text-2xs font-semibold tabular text-warning">
+                  <Flame size={12} /> {streak}
+                </span>
+              )}
+              <button
+                onClick={() => removeHabit(h.id)}
+                className="grid h-6 w-6 shrink-0 place-items-center rounded text-subtle opacity-0 transition-all hover:bg-danger/12 hover:text-danger group-hover:opacity-100"
+                aria-label="Eliminar hábito"
+              >
+                <X size={12} />
+              </button>
+            </div>
+          )
+        })}
+        <div className="flex gap-2 pt-1">
+          <input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addHabit()}
+            placeholder={habits.length ? 'Nuevo hábito…' : 'Leer 20 min, meditar, alemán…'}
+            className="h-9 w-full rounded-lg border border-line bg-surface-2 px-3 text-[13px] text-ink placeholder:text-subtle focus:border-accent/50 focus:outline-none"
+          />
+          <Button variant="soft" size="sm" icon={Plus} className="h-9 shrink-0" onClick={addHabit}>Añadir</Button>
+        </div>
+      </CardBody>
+    </Card>
+  )
+}
+
 export default function Inicio() {
   const { settings, navigate, setQuickAdd, toast, focus, startFocus, setReviewOpen } = useApp()
   const { tasks, events, goals, movements, holdings, workouts, add, remove } = useData()
@@ -128,13 +219,14 @@ export default function Inicio() {
   const showW = (id) => !(settings.homeWidgets || []).find((w) => w.id === id)?.hidden
 
   const isSunday = new Date().getDay() === 0
+  const quickHidden = (id) => Boolean((settings.quickActions || []).find((q) => q.id === id)?.hidden)
   const QUICK = [
     { id: 'task', label: 'Nueva tarea', icon: Plus, run: () => setQuickAdd(true) },
     { id: 'expense', label: 'Registrar gasto', icon: Receipt, run: () => navigate('finanzas') },
     { id: 'journal', label: 'Anotar en diario', icon: PenLine, run: () => navigate('diario') },
     { id: 'workout', label: 'Nuevo entreno', icon: Dumbbell, run: () => navigate('deporte') },
     { id: 'review', label: 'Revisión semanal', icon: CalendarClock, run: () => setReviewOpen(true), pulse: isSunday },
-  ]
+  ].filter((q) => !quickHidden(q.id))
 
   return (
     <PageContainer>
@@ -302,6 +394,8 @@ export default function Inicio() {
             </CardBody>
           </Card>
           )}
+
+          {showW('habits') && <HabitsWidget />}
 
           {showW('agenda') && (
           <Card className="animate-fade-up" style={{ animationDelay: '160ms' }}>

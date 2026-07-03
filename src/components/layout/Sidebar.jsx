@@ -1,7 +1,7 @@
 import { Settings, Plus } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
-import { MODULES, moduleName } from '../../lib/data'
+import { MODULES, moduleName, moduleIcon } from '../../lib/data'
 import { ICONS } from './icons'
 import { Logo } from './Logo'
 import { Avatar, Button } from '../ui'
@@ -45,7 +45,7 @@ export function Sidebar() {
     .filter((m) => !m.hidden)
     .map((m) => {
       const base = MODULES.find((x) => x.id === m.id)
-      return base && { ...base, label: moduleName(settings, m.id) }
+      return base && { ...base, label: moduleName(settings, m.id), icon: moduleIcon(settings, m.id) }
     })
     .filter(Boolean)
 

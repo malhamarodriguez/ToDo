@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom'
 import { Menu, Settings, X, Plus } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
-import { MODULES, moduleName } from '../../lib/data'
+import { MODULES, moduleName, moduleIcon } from '../../lib/data'
 import { ICONS } from './icons'
 import { Logo } from './Logo'
 import { Avatar } from '../ui'
@@ -26,7 +26,7 @@ export function MobileTabBar() {
       </button>
       <nav className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line glass pb-[env(safe-area-inset-bottom)] lg:hidden">
       {items.map((m) => {
-        const Icon = ICONS[m.icon]
+        const Icon = ICONS[moduleIcon(settings, m.id)]
         const active = route === m.id
         return (
           <button
@@ -77,7 +77,7 @@ export function MobileDrawer() {
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
           {mods.map((m) => {
-            const Icon = ICONS[m.icon]
+            const Icon = ICONS[moduleIcon(settings, m.id)]
             const active = route === m.id
             return (
               <button

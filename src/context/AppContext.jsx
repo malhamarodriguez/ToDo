@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { ACCENTS, applyTheme, resolveMode } from '../lib/theme'
-import { MODULES, HOME_WIDGETS } from '../lib/data'
+import { MODULES, HOME_WIDGETS, QUICK_ACTIONS } from '../lib/data'
 import { uid, configureMoney } from '../lib/utils'
 
 const FONT_SCALES = { sm: '14.5px', md: '16px', lg: '17.5px' }
@@ -20,6 +20,10 @@ const DEFAULT_SETTINGS = {
   modules: MODULES.map((m) => ({ id: m.id, hidden: false })),
   // Personalización
   moduleNames: {}, // { negocio: 'Estudios', ... }
+  moduleIcons: {}, // { negocio: 'GraduationCap', ... }
+  quickActions: QUICK_ACTIONS.map((q) => ({ id: q.id, hidden: false })),
+  habits: [], // [{ id, name, color }]
+  habitLog: {}, // { 'YYYY-MM-DD': [habitId] }
   homeWidgets: HOME_WIDGETS.map((w) => ({ id: w.id, hidden: false })),
   fontScale: 'md', // sm | md | lg
   currency: 'EUR',

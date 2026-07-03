@@ -7,6 +7,14 @@ import {
   NotebookPen,
   Calendar,
   Settings,
+  BookOpen,
+  GraduationCap,
+  Heart,
+  Palette,
+  Music,
+  Plane,
+  ShoppingBag,
+  Coffee,
 } from 'lucide-react'
 
 export const ICONS = {
@@ -18,4 +26,12 @@ export const ICONS = {
   NotebookPen,
   Calendar,
   Settings,
+  BookOpen,
+  GraduationCap,
+  Heart,
+  Palette,
+  Music,
+  Plane,
+  ShoppingBag,
+  Coffee,
 }

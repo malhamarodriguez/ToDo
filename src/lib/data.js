@@ -76,8 +76,30 @@ export const HOME_WIDGETS = [
   { id: 'quick', label: 'Accesos rápidos' },
   { id: 'focus', label: 'Enfoque de hoy' },
   { id: 'tasks', label: 'Tareas de hoy' },
+  { id: 'habits', label: 'Hábitos' },
   { id: 'workout', label: 'Entreno de hoy' },
   { id: 'agenda', label: 'Agenda de hoy' },
   { id: 'goals', label: 'Metas' },
   { id: 'finance', label: 'Franja financiera' },
 ]
+
+// Accesos rápidos del Inicio (configurables)
+export const QUICK_ACTIONS = [
+  { id: 'task', label: 'Nueva tarea' },
+  { id: 'expense', label: 'Registrar gasto' },
+  { id: 'journal', label: 'Anotar en diario' },
+  { id: 'workout', label: 'Nuevo entreno' },
+  { id: 'review', label: 'Revisión semanal' },
+]
+
+// Iconos elegibles para los módulos (clic sobre el icono en Ajustes)
+export const ICON_CHOICES = [
+  'Home', 'Briefcase', 'Wallet', 'Dumbbell', 'Target', 'NotebookPen', 'Calendar',
+  'BookOpen', 'GraduationCap', 'Heart', 'Palette', 'Music', 'Plane', 'ShoppingBag', 'Coffee',
+]
+
+export const moduleIcon = (settings, id) => {
+  const custom = settings?.moduleIcons?.[id]
+  if (custom && ICON_CHOICES.includes(custom)) return custom
+  return MODULES.find((m) => m.id === id)?.icon || 'Home'
+}
