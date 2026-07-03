@@ -10,6 +10,7 @@ import Metas from './pages/Metas'
 import Diario from './pages/Diario'
 import Calendario from './pages/Calendario'
 import Ajustes from './pages/Ajustes'
+import Informe from './pages/Informe'
 
 const PAGES = {
   inicio: Inicio,
@@ -20,6 +21,7 @@ const PAGES = {
   diario: Diario,
   calendario: Calendario,
   ajustes: Ajustes,
+  informe: Informe,
 }
 
 function Router() {

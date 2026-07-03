@@ -41,6 +41,8 @@ export function AppProvider({ children }) {
   const [focus, setFocus] = useState(null)
   // Modal de mejora a Pro: false | true | 'motivo'
   const [upgradeOpen, setUpgradeOpen] = useState(false)
+  // Revisión semanal guiada
+  const [reviewOpen, setReviewOpen] = useState(false)
   const themingTimer = useRef()
 
   useEffect(() => {
@@ -121,6 +123,8 @@ export function AppProvider({ children }) {
     stopFocus,
     upgradeOpen,
     setUpgradeOpen,
+    reviewOpen,
+    setReviewOpen,
     toasts,
     toast,
     dismissToast,

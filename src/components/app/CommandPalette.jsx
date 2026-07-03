@@ -19,7 +19,7 @@ const norm = (s) =>
     .replace(/[̀-ͯ]/g, '')
 
 export function CommandPalette() {
-  const { paletteOpen, setPaletteOpen, navigate, setQuickAdd, openTask, settings, update } = useApp()
+  const { paletteOpen, setPaletteOpen, navigate, setQuickAdd, openTask, settings, update, setReviewOpen } = useApp()
   const { tasks, clients, notes, events, goals } = useData()
   const [q, setQ] = useState('')
   const [sel, setSel] = useState(0)
@@ -56,6 +56,8 @@ export function CommandPalette() {
     // Acciones
     const actions = [
       { icon: Plus, label: 'Nueva tarea', hint: 'Acción', run: () => setQuickAdd(true) },
+      { icon: CalendarDays, label: 'Revisión semanal', hint: 'Acción', run: () => setReviewOpen(true) },
+      { icon: Target, label: 'Informe mensual', hint: 'Acción', run: () => navigate('informe') },
       {
         icon: mode === 'dark' ? Sun : Moon,
         label: mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro',

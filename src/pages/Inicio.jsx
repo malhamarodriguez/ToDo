@@ -90,7 +90,7 @@ function Onboarding() {
 }
 
 export default function Inicio() {
-  const { settings, navigate, setQuickAdd, toast, focus, startFocus } = useApp()
+  const { settings, navigate, setQuickAdd, toast, focus, startFocus, setReviewOpen } = useApp()
   const { tasks, events, goals, movements, holdings, workouts, add, remove } = useData()
 
   const todays = tasks.filter((t) => (taskToday(t) || taskOverdue(t)) && t.status !== 'done')
@@ -124,11 +124,13 @@ export default function Inicio() {
 
   const homeGoals = goals.slice(0, 3)
 
+  const isSunday = new Date().getDay() === 0
   const QUICK = [
     { id: 'task', label: 'Nueva tarea', icon: Plus, run: () => setQuickAdd(true) },
     { id: 'expense', label: 'Registrar gasto', icon: Receipt, run: () => navigate('finanzas') },
     { id: 'journal', label: 'Anotar en diario', icon: PenLine, run: () => navigate('diario') },
     { id: 'workout', label: 'Nuevo entreno', icon: Dumbbell, run: () => navigate('deporte') },
+    { id: 'review', label: 'Revisión semanal', icon: CalendarClock, run: () => setReviewOpen(true), pulse: isSunday },
   ]
 
   return (
@@ -162,7 +164,10 @@ export default function Inicio() {
             variant="secondary"
             icon={q.icon}
             onClick={q.run}
-            className="transition-all hover:-translate-y-0.5 hover:border-accent/40 hover:text-accent"
+            className={cx(
+              'transition-all hover:-translate-y-0.5 hover:border-accent/40 hover:text-accent',
+              q.pulse && 'border-accent/40 text-accent shadow-glow'
+            )}
           >
             {q.label}
           </Button>

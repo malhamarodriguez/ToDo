@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Plus, Wallet, TrendingUp, TrendingDown, PiggyBank, Landmark, Calculator,
-  Repeat, Users, ArrowRight, AlertTriangle, Banknote, Pencil, CheckCircle2,
+  Repeat, Users, ArrowRight, AlertTriangle, Banknote, Pencil, CheckCircle2, FileBarChart,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useData } from '../context/DataContext'
@@ -109,7 +109,7 @@ function SalaryModal({ open, onClose }) {
 }
 
 export default function Finanzas() {
-  const { settings, toast, setUpgradeOpen } = useApp()
+  const { settings, toast, setUpgradeOpen, navigate } = useApp()
   const c = useThemeColors()
   const { movements, budgets, savings, holdings, clients, recurring, add, remove, isPro } = useData()
   const [modal, setModal] = useState(null) // 'movement' | {type,row} | 'salary'
@@ -169,6 +169,23 @@ export default function Finanzas() {
 
   const hasMovements = movements.length > 0
 
+  // Fijos (recurrentes) aún sin registrar este mes → registro en un clic
+  const pendingFixed = recurring.filter(
+    (r) => !mThis.some((m) => (m.concept || '').toLowerCase() === (r.concept || '').toLowerCase())
+  )
+  const logAllFixed = async () => {
+    for (const r of pendingFixed) {
+      await add('movements', {
+        concept: r.concept,
+        category: r.amount > 0 ? 'Ingreso fijo' : 'Gasto fijo',
+        amount: Number(r.amount),
+        date: todayISO(),
+        recurring: true,
+      })
+    }
+    toast({ type: 'success', title: 'Fijos registrados', desc: `${pendingFixed.length} movimientos añadidos.` })
+  }
+
   // helpers de modal
   const openNew = (type) => setModal(type)
   const openEdit = (type, row) => setModal({ type, row })
@@ -183,8 +200,26 @@ export default function Finanzas() {
         eyebrow="Dinero"
         title="Finanzas"
         subtitle="Nómina, ingresos y gastos, y patrimonio. Toca cualquier elemento para editarlo."
-        actions={<Button variant="primary" icon={Plus} onClick={() => openNew('movement')}><span className="hidden sm:inline">Movimiento</span></Button>}
+        actions={
+          <>
+            <Button variant="secondary" icon={FileBarChart} onClick={() => navigate('informe')}>
+              <span className="hidden sm:inline">Informe</span>
+            </Button>
+            <Button variant="primary" icon={Plus} onClick={() => openNew('movement')}><span className="hidden sm:inline">Movimiento</span></Button>
+          </>
+        }
       />
+
+      {pendingFixed.length > 0 && (
+        <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-accent/25 bg-accent/[0.06] px-4 py-3">
+          <Repeat size={16} className="shrink-0 text-accent" />
+          <p className="min-w-0 flex-1 text-[13px] text-ink">
+            Tienes <strong>{pendingFixed.length} fijo{pendingFixed.length === 1 ? '' : 's'}</strong> sin registrar este mes
+            <span className="text-muted"> · {pendingFixed.map((r) => r.concept).slice(0, 3).join(', ')}{pendingFixed.length > 3 ? '…' : ''}</span>
+          </p>
+          <Button variant="primary" size="sm" onClick={logAllFixed}>Registrar todos</Button>
+        </div>
+      )}
 
       {/* KPIs */}
       <div className="mb-5 grid grid-cols-2 gap-4 lg:grid-cols-4">

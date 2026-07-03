@@ -4,6 +4,7 @@ import { useAuth } from './AuthContext'
 import { useApp } from './AppContext'
 import { demoSeed } from '../lib/demo'
 import { uid } from '../lib/utils'
+import { getRecur, nextDue } from '../lib/nlp'
 
 const DataCtx = createContext(null)
 export const useData = () => useContext(DataCtx)
@@ -196,9 +197,33 @@ export function DataProvider({ children, demo = false }) {
   const toggleTask = useCallback(
     (id) => {
       const t = dataRef.current.tasks.find((x) => x.id === id)
-      if (t) update('tasks', id, { status: t.status === 'done' ? 'todo' : 'done' })
+      if (!t) return
+      const completing = t.status !== 'done'
+      update('tasks', id, { status: completing ? 'done' : 'todo' })
+      // Recurrentes: al completar, se crea sola la próxima ocurrencia.
+      if (completing) {
+        const recur = getRecur(t)
+        if (!recur) return
+        const due = nextDue(t.due, recur)
+        const dupe = dataRef.current.tasks.some(
+          (x) => x.id !== id && x.title === t.title && x.due === due && x.status !== 'done'
+        )
+        if (dupe) return
+        add('tasks', {
+          title: t.title,
+          project_id: t.project_id || null,
+          priority: t.priority,
+          status: 'todo',
+          due,
+          today: false,
+          subtasks: (t.subtasks || []).map((s) => ({ ...s, done: false })),
+          tags: t.tags || [],
+          position: (t.position ?? 0) + 0.001,
+        })
+        app.toast({ type: 'info', title: '↻ Tarea recurrente', desc: `Próxima creada para el ${due.slice(8, 10)}/${due.slice(5, 7)}` })
+      }
     },
-    [update]
+    [update, add, app]
   )
 
   const moveTask = useCallback(

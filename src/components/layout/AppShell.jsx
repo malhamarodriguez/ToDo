@@ -7,6 +7,7 @@ import { Toaster, Button } from '../ui'
 import { TaskModal } from '../app/TaskModal'
 import { CommandPalette } from '../app/CommandPalette'
 import { UpgradeModal } from '../app/UpgradeModal'
+import { WeeklyReview } from '../app/WeeklyReview'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
 import { MODULES } from '../../lib/data'
@@ -108,6 +109,7 @@ export function AppShell({ children }) {
       <TaskModal />
       <CommandPalette />
       <UpgradeModal />
+      <WeeklyReview />
       <Toaster />
     </div>
   )

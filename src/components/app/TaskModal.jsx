@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
-import { Plus, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Plus, X, Repeat } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
 import { PRIORITIES } from '../../lib/data'
 import { todayISO, cx } from '../../lib/utils'
+import { parseTask, RECUR_OPTIONS, getRecur, withRecur } from '../../lib/nlp'
 import { Modal, Button, Label, Input, Select, Checkbox, Segmented } from '../ui'
 
 export function TaskModal() {
@@ -18,6 +19,7 @@ export function TaskModal() {
   const [today, setToday] = useState(true)
   const [subtasks, setSubtasks] = useState([])
   const [subDraft, setSubDraft] = useState('')
+  const [recur, setRecur] = useState('')
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -28,8 +30,12 @@ export function TaskModal() {
     setDue(/^\d{4}-\d{2}-\d{2}$/.test(editing?.due || '') ? editing.due : '')
     setToday(editing ? Boolean(editing.today) : true)
     setSubtasks(editing?.subtasks || [])
+    setRecur(editing ? getRecur(editing) : '')
     setSubDraft('')
   }, [taskModal]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Lenguaje natural en vivo: "mañana !alta #proyecto"
+  const nlp = useMemo(() => parseTask(title, projects), [title, projects])
 
   if (!taskModal) return null
   const close = () => setTaskModal(null)
@@ -45,12 +51,13 @@ export function TaskModal() {
     if (!title.trim()) return
     setBusy(true)
     const payload = {
-      title: title.trim(),
-      project_id: project || null,
-      priority,
-      due,
-      today,
+      title: (nlp.chips.length ? nlp.title : title).trim(),
+      project_id: project || nlp.projectId || null,
+      priority: nlp.priority || priority,
+      due: due || nlp.due || '',
+      today: today || nlp.due === todayISO(),
       subtasks,
+      tags: withRecur(editing?.tags, recur),
     }
     if (editing) {
       await update('tasks', editing.id, payload)
@@ -92,8 +99,18 @@ export function TaskModal() {
     >
       <form onSubmit={submit} className="space-y-4">
         <div>
-          <Label>Título</Label>
+          <Label hint="prueba: mañana !alta #proyecto">Título</Label>
           <Input autoFocus placeholder="¿Qué hay que hacer?" value={title} onChange={(e) => setTitle(e.target.value)} />
+          {nlp.chips.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-2xs text-subtle">Detectado:</span>
+              {nlp.chips.map((c) => (
+                <span key={c.k} className="rounded-full border border-accent/25 bg-accent/10 px-2 py-0.5 text-2xs font-medium text-accent">
+                  {c.label}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>
@@ -127,6 +144,16 @@ export function TaskModal() {
           <span className="text-sm text-ink">Añadir a “Tareas de hoy”</span>
           {due === todayISO() && <span className="ml-auto text-2xs text-subtle">vence hoy</span>}
         </label>
+
+        <div>
+          <Label hint="al completarla se crea la siguiente"><span className="inline-flex items-center gap-1.5"><Repeat size={13} /> Repetir</span></Label>
+          <Segmented
+            value={recur}
+            onChange={setRecur}
+            className="w-full [&>button]:flex-1"
+            options={RECUR_OPTIONS}
+          />
+        </div>
 
         {/* Subtareas */}
         <div>
