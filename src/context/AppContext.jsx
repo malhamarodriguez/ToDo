@@ -34,6 +34,8 @@ const DEFAULT_SETTINGS = {
 function loadSettings() {
   try {
     const raw = JSON.parse(localStorage.getItem('summa:settings') || '{}')
+    // Electric Kinetic: el acento por defecto pasa de índigo a cian.
+    if (raw.accent?.id === 'indigo') raw.accent = ACCENTS[0]
     return { ...DEFAULT_SETTINGS, ...raw }
   } catch {
     return DEFAULT_SETTINGS

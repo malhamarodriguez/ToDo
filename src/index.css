@@ -1,12 +1,11 @@
 /* ============================================================
-   Summa — Sistema de diseño (tokens)
-   Ejes: dirección (eclipse | cálido) × modo (dark | light)
-   + acento configurable en tiempo de ejecución.
+   Summa — Sistema de diseño "Electric Kinetic"
+   Obsidiana + cian eléctrico con glow · Geist (texto) ·
+   JetBrains Mono (etiquetas) · dark/light + acento configurable.
    ============================================================ */
 
-@import '@fontsource-variable/hanken-grotesk';
-@import '@fontsource-variable/space-grotesk';
-@import '@fontsource-variable/fraunces';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/jetbrains-mono';
 
 @tailwind base;
 @tailwind components;
@@ -14,15 +13,18 @@
 
 /* ---------- Tokens compartidos ---------- */
 :root {
-  --font-sans: 'Hanken Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Space Grotesk Variable', var(--font-sans);
-  --font-mono: ui-monospace, 'SFMono-Regular', 'JetBrains Mono', monospace;
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Geist Variable', var(--font-sans);
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 
-  --radius: 14px;
+  --radius: 6px;
 
-  /* Acento por defecto (índigo). Se sobreescribe en tiempo real. */
-  --accent: 243 76% 64%;
-  --accent-fg: 0 0% 100%;
+  /* Acento por defecto: cian eléctrico (texto oscuro encima). */
+  --accent: 186 100% 50%;
+  --accent-fg: 187 100% 7%;
+
+  /* Segunda serie de datos (violeta neón) */
+  --viz-2: 258 100% 66%;
 
   /* Semánticos (válidos en ambos modos) */
   --success: 152 56% 46%;
@@ -34,67 +36,30 @@
 }
 
 /* ============================================================
-   DIRECCIÓN A — "Eclipse"  (frío, índigo, preciso)
+   ELECTRIC KINETIC — superficies por modo
+   (el atributo data-direction queda sin efecto: un solo sistema)
    ============================================================ */
-[data-direction='eclipse'] {
-  --font-display: 'Space Grotesk Variable', var(--font-sans);
-  --radius: 14px;
-  --accent: 243 76% 64%;
-  --accent-fg: 0 0% 100%;
+[data-mode='dark'] {
+  --bg: 228 23% 5%;            /* obsidiana #0A0B10 */
+  --surface: 225 20% 11%;      /* nivel 1 #161821 */
+  --surface-2: 227 20% 14%;    /* nivel 2 #1C1F2B */
+  --elevated: 228 19% 17%;
+  --border: 228 16% 19%;       /* ≈ blanco al 10% sobre obsidiana */
+  --border-strong: 227 12% 30%;
+  --text: 252 17% 90%;         /* #E3E1E9 */
+  --text-muted: 210 10% 70%;
+  --text-subtle: 214 8% 50%;
 }
-[data-direction='eclipse'][data-mode='dark'] {
-  --bg: 222 24% 6%;
-  --surface: 222 21% 9%;
-  --surface-2: 221 18% 12%;
-  --elevated: 220 16% 15%;
-  --border: 220 15% 18%;
-  --border-strong: 218 13% 27%;
-  --text: 210 30% 98%;
-  --text-muted: 217 14% 68%;
-  --text-subtle: 219 11% 47%;
-}
-[data-direction='eclipse'][data-mode='light'] {
-  --bg: 220 32% 97%;
+[data-mode='light'] {
+  --bg: 200 27% 98%;           /* #F8FAFB */
   --surface: 0 0% 100%;
-  --surface-2: 220 30% 98%;
+  --surface-2: 200 13% 95%;    /* #F2F4F5 */
   --elevated: 0 0% 100%;
-  --border: 220 22% 90%;
-  --border-strong: 220 16% 80%;
-  --text: 222 38% 11%;
-  --text-muted: 220 12% 36%;
-  --text-subtle: 220 10% 50%;
-}
-
-/* ============================================================
-   DIRECCIÓN B — "Cálido"  (graphite/papel, ámbar, editorial)
-   ============================================================ */
-[data-direction='calido'] {
-  --font-display: 'Fraunces Variable', Georgia, serif;
-  --radius: 18px;
-  --accent: 36 92% 55%;
-  --accent-fg: 30 45% 12%;
-}
-[data-direction='calido'][data-mode='dark'] {
-  --bg: 28 14% 6%;
-  --surface: 30 11% 9%;
-  --surface-2: 30 10% 12%;
-  --elevated: 30 9% 15%;
-  --border: 32 9% 19%;
-  --border-strong: 32 8% 28%;
-  --text: 40 30% 97%;
-  --text-muted: 36 12% 68%;
-  --text-subtle: 34 9% 49%;
-}
-[data-direction='calido'][data-mode='light'] {
-  --bg: 40 38% 96%;
-  --surface: 42 52% 99%;
-  --surface-2: 40 32% 96%;
-  --elevated: 42 52% 99%;
-  --border: 38 24% 88%;
-  --border-strong: 36 18% 77%;
-  --text: 28 28% 13%;
-  --text-muted: 30 12% 38%;
-  --text-subtle: 32 10% 52%;
+  --border: 195 6% 89%;
+  --border-strong: 196 6% 76%;
+  --text: 195 8% 11%;          /* #191C1D */
+  --text-muted: 196 12% 32%;
+  --text-subtle: 197 8% 46%;
 }
 
 /* ---------- Sombras por modo ---------- */
@@ -104,7 +69,7 @@
   --shadow: 0 10px 28px -8px rgb(0 0 0 / 0.55), 0 2px 6px -2px rgb(0 0 0 / 0.4);
   --shadow-lg: 0 20px 44px -14px rgb(0 0 0 / 0.62), 0 4px 12px -4px rgb(0 0 0 / 0.5);
   --shadow-xl: 0 36px 70px -18px rgb(0 0 0 / 0.72);
-  --shadow-glow: 0 0 0 1px hsl(var(--accent) / 0.4), 0 10px 30px -8px hsl(var(--accent) / 0.5);
+  --shadow-glow: 0 0 0 1px hsl(var(--accent) / 0.45), 0 0 18px hsl(var(--accent) / 0.35), 0 0 44px -8px hsl(var(--accent) / 0.4);
 }
 [data-mode='light'] {
   --shadow-xs: 0 1px 2px 0 rgb(16 24 40 / 0.06);
@@ -177,8 +142,8 @@
   .app-canvas {
     background-color: hsl(var(--bg));
     background-image:
-      radial-gradient(60rem 60rem at 110% -10%, hsl(var(--accent) / 0.07), transparent 55%),
-      radial-gradient(48rem 48rem at -10% 0%, hsl(var(--accent) / 0.04), transparent 50%);
+      radial-gradient(64rem 64rem at 110% -12%, hsl(var(--accent) / 0.09), transparent 55%),
+      radial-gradient(50rem 50rem at -12% 108%, hsl(var(--viz-2) / 0.06), transparent 52%);
     background-attachment: fixed;
   }
 

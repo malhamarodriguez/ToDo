@@ -28,7 +28,7 @@ export function Logo({ size = 28, onClick, collapsed, className }) {
       {!collapsed && (
         <span className="flex flex-col items-start leading-none">
           <span className="font-display text-[17px] font-semibold tracking-tight text-ink">Summa</span>
-          <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-subtle">
+          <span className="mt-1 font-mono text-[9.5px] font-medium uppercase tracking-[0.18em] text-subtle">
             Todo cuenta.
           </span>
         </span>

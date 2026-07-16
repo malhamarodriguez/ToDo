@@ -62,7 +62,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-        <p className="px-3 pb-1.5 pt-2 text-2xs font-semibold uppercase tracking-[0.14em] text-subtle">
+        <p className="px-3 pb-1.5 pt-2 font-mono text-2xs font-medium uppercase tracking-[0.14em] text-subtle">
           Espacios
         </p>
         {mods.map((m) => (

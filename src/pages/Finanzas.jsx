@@ -291,7 +291,7 @@ export default function Finanzas() {
           <CardHeader title="Ingresos vs. gastos" subtitle="Últimos 6 meses" icon={TrendingUp} />
           <CardBody className="pt-3">
             {hasMovements ? (
-              <GroupedBars data={flow} series={[{ key: 'ingresos', name: 'Ingresos', color: c.accent }, { key: 'gastos', name: 'Gastos', color: c.border }]} fmt={(v) => `${Math.round(v / 1000)}k`} height={250} />
+              <GroupedBars data={flow} series={[{ key: 'ingresos', name: 'Ingresos', color: c.accent }, { key: 'gastos', name: 'Gastos', color: c.violet }]} fmt={(v) => `${Math.round(v / 1000)}k`} height={250} />
             ) : <EmptyState icon={TrendingUp} title="Sin datos" compact />}
           </CardBody>
         </Card>

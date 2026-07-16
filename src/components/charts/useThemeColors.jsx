@@ -14,6 +14,7 @@ export function useThemeColors() {
     const va = (name, a) => `hsl(${s.getPropertyValue(name).trim()} / ${a})`
     return {
       accent: v('--accent'),
+      violet: v('--viz-2'),
       accentSoft: va('--accent', 0.16),
       grid: va('--border', 0.7),
       axis: v('--text-subtle'),

@@ -1,10 +1,10 @@
 // Tema: presets de acento, direcciones y aplicación al DOM.
 
 export const ACCENTS = [
+  { id: 'electrico', name: 'Cian eléctrico', hsl: '186 100% 50%', fg: '187 100% 7%' },
   { id: 'indigo', name: 'Índigo', hsl: '243 76% 64%', fg: '0 0% 100%' },
   { id: 'violeta', name: 'Violeta', hsl: '262 72% 64%', fg: '0 0% 100%' },
   { id: 'azul', name: 'Azul', hsl: '213 90% 58%', fg: '0 0% 100%' },
-  { id: 'cian', name: 'Cian', hsl: '188 78% 44%', fg: '195 80% 8%' },
   { id: 'esmeralda', name: 'Esmeralda', hsl: '158 64% 44%', fg: '0 0% 100%' },
   { id: 'lima', name: 'Lima', hsl: '88 58% 48%', fg: '90 60% 8%' },
   { id: 'ambar', name: 'Ámbar', hsl: '36 92% 55%', fg: '30 45% 12%' },
@@ -35,8 +35,8 @@ export function fgForHsl(h, s, l) {
   // Luminancia aproximada a partir de HSL.
   const lum = l / 100
   const sat = s / 100
-  const boost = sat > 0.5 && h > 30 && h < 200 ? 0.12 : 0
-  return lum + boost > 0.62 ? '30 45% 12%' : '0 0% 100%'
+  const boost = sat > 0.5 && h > 30 && h < 210 ? 0.14 : 0
+  return lum + boost >= 0.6 ? '187 100% 7%' : '0 0% 100%'
 }
 
 export function customAccent(h, s = 72, l = 60) {
@@ -64,5 +64,5 @@ export function applyTheme(settings) {
     root.style.setProperty('--accent-fg', settings.accent.fg)
   }
   const meta = document.querySelector('meta[name="theme-color"]')
-  if (meta) meta.setAttribute('content', resolveMode(settings.mode) === 'dark' ? '#0b0d12' : '#f4f6fa')
+  if (meta) meta.setAttribute('content', resolveMode(settings.mode) === 'dark' ? '#0a0b10' : '#f8fafb')
 }

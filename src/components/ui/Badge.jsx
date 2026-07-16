@@ -13,7 +13,7 @@ export function Badge({ tone = 'neutral', dot, icon: Icon, className, children, 
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide',
+        'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-2xs font-medium uppercase tracking-wide',
         TONES[tone],
         className
       )}
@@ -46,7 +46,7 @@ export function Chip({ color, children, className }) {
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-2xs font-medium',
+        'inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 font-mono text-2xs font-medium',
         className
       )}
       style={{

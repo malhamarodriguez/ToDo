@@ -8,7 +8,7 @@ import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useData, TABLES } from '../context/DataContext'
 import { FREE_LIMITS } from '../lib/plan'
-import { ACCENTS, DIRECTIONS, customAccent } from '../lib/theme'
+import { ACCENTS, customAccent } from '../lib/theme'
 import { MODULES, HOME_WIDGETS, QUICK_ACTIONS, ICON_CHOICES, moduleName, moduleIcon } from '../lib/data'
 import { ICONS } from '../components/layout/icons'
 import { PageContainer, PageHeader } from '../components/layout/Page'
@@ -246,43 +246,6 @@ export default function Ajustes() {
                     }}
                   />
                 </label>
-              )
-            })}
-          </div>
-        </Panel>
-
-        {/* Dirección visual — las dos direcciones */}
-        <Panel title="Dirección visual" subtitle="Elige la personalidad de la interfaz" icon={Sparkles}>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {DIRECTIONS.map((d) => {
-              const active = settings.direction === d.id
-              return (
-                <button
-                  key={d.id}
-                  onClick={() => update({ direction: d.id })}
-                  className={cx(
-                    'relative overflow-hidden rounded-xl border p-4 text-left transition-all',
-                    active ? 'border-accent ring-2 ring-accent/20' : 'border-line hover:border-line-strong'
-                  )}
-                >
-                  {active && (
-                    <span className="absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full bg-accent text-accent-fg">
-                      <Check size={13} strokeWidth={3} />
-                    </span>
-                  )}
-                  {/* mini-preview */}
-                  <div className="mb-3 flex gap-1.5">
-                    {(d.id === 'eclipse'
-                      ? ['222 24% 9%', '243 76% 64%', '220 15% 18%', '210 30% 98%']
-                      : ['28 14% 9%', '36 92% 55%', '32 9% 19%', '40 30% 97%']
-                    ).map((c, i) => (
-                      <span key={i} className="h-9 flex-1 rounded-md" style={{ background: `hsl(${c})` }} />
-                    ))}
-                  </div>
-                  <p className="font-display text-base font-bold text-ink">{d.name}</p>
-                  <p className="text-2xs font-medium uppercase tracking-wide text-accent">{d.tagline}</p>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{d.desc}</p>
-                </button>
               )
             })}
           </div>

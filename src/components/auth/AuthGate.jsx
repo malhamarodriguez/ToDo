@@ -14,7 +14,7 @@ function Splash() {
         <div className="animate-pulse">
           <Mark size={44} />
         </div>
-        <p className="text-2xs font-medium uppercase tracking-[0.22em] text-subtle">Todo cuenta.</p>
+        <p className="font-mono text-2xs font-medium uppercase tracking-[0.22em] text-subtle">Todo cuenta.</p>
       </div>
     </div>
   )

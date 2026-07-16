@@ -23,7 +23,7 @@ export function Avatar({ name = '', size = 36, src, className, ring }) {
 
 export function Kbd({ children }) {
   return (
-    <kbd className="inline-flex h-5 min-w-[20px] items-center justify-center rounded border border-line bg-surface-2 px-1.5 font-sans text-2xs font-medium text-muted">
+    <kbd className="inline-flex h-5 min-w-[20px] items-center justify-center rounded border border-line bg-surface-2 px-1.5 font-mono text-2xs font-medium text-muted">
       {children}
     </kbd>
   )
@@ -53,7 +53,7 @@ export function Tooltip({ label, children, side = 'top' }) {
 export function SectionTitle({ children, className, action }) {
   return (
     <div className={cx('mb-3 flex items-center justify-between', className)}>
-      <h2 className="text-2xs font-semibold uppercase tracking-[0.12em] text-subtle">{children}</h2>
+      <h2 className="font-mono text-2xs font-medium uppercase tracking-[0.12em] text-subtle">{children}</h2>
       {action}
     </div>
   )
