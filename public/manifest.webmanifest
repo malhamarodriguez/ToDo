@@ -1,7 +1,7 @@
 {
-  "name": "Núcleo — centro de mando",
-  "short_name": "Núcleo",
-  "description": "Panel personal todo-en-uno: negocio, finanzas, deporte y metas.",
+  "name": "Summa — Todo cuenta.",
+  "short_name": "Summa",
+  "description": "La suma de tu vida en un solo lugar: tareas, finanzas, deporte y metas.",
   "lang": "es",
   "start_url": "./",
   "scope": "./",

@@ -17,14 +17,14 @@ const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 export function getConfig() {
   return {
-    url: envUrl || localStorage.getItem('nucleo:sb_url') || DEFAULT_URL,
-    key: envKey || localStorage.getItem('nucleo:sb_key') || DEFAULT_KEY,
+    url: envUrl || localStorage.getItem('summa:sb_url') || DEFAULT_URL,
+    key: envKey || localStorage.getItem('summa:sb_key') || DEFAULT_KEY,
   }
 }
 
 export function saveConfig(url, key) {
-  localStorage.setItem('nucleo:sb_url', url.trim())
-  localStorage.setItem('nucleo:sb_key', key.trim())
+  localStorage.setItem('summa:sb_url', url.trim())
+  localStorage.setItem('summa:sb_key', key.trim())
 }
 
 const { url, key } = getConfig()

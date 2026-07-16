@@ -15,7 +15,7 @@ export const TABLES = [
 ]
 
 const empty = () => Object.fromEntries(TABLES.map((t) => [t, []]))
-const DEMO_DATA_KEY = 'nucleo:demo-data'
+const DEMO_DATA_KEY = 'summa:demo-data'
 
 export function DataProvider({ children, demo = false }) {
   const { user } = useAuth()

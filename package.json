@@ -1,9 +1,9 @@
 {
-  "name": "nucleo",
+  "name": "summa",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Núcleo — panel personal todo-en-uno para autónomos y emprendedores",
+  "description": "Summa — la suma de tu vida en un solo lugar. Todo cuenta.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

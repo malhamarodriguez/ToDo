@@ -1,4 +1,4 @@
-// Núcleo · webhook de Stripe → activa/desactiva el plan Pro.
+// Summa · webhook de Stripe → activa/desactiva el plan Pro.
 //
 // Cómo desplegarla (sin instalar nada):
 //   Supabase → Edge Functions → Deploy new function → nombre: stripe-webhook

@@ -10,8 +10,11 @@ import Landing, { Legal } from '../../pages/Landing'
 function Splash() {
   return (
     <div className="app-canvas grid min-h-[100dvh] place-items-center">
-      <div className="animate-pulse">
-        <Mark size={40} />
+      <div className="flex flex-col items-center gap-4">
+        <div className="animate-pulse">
+          <Mark size={44} />
+        </div>
+        <p className="text-2xs font-medium uppercase tracking-[0.22em] text-subtle">Todo cuenta.</p>
       </div>
     </div>
   )

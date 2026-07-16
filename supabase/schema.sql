@@ -1,5 +1,5 @@
 -- ============================================================
--- Núcleo · esquema de base de datos (Supabase / Postgres)
+-- Summa · esquema de base de datos (Supabase / Postgres)
 -- Ejecuta este SQL en: Supabase → SQL Editor → New query → Run
 -- Cada fila pertenece a un usuario y queda protegida por RLS.
 -- ============================================================

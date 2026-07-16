@@ -149,7 +149,7 @@ export default function Negocio() {
           initial={projModal.row}
           onDelete={projModal.row ? () => remove('projects', projModal.row.id) : undefined}
           fields={[
-            { key: 'name', label: 'Nombre', type: 'text', required: true, autoFocus: true, placeholder: 'p. ej. SaaS · Núcleo' },
+            { key: 'name', label: 'Nombre', type: 'text', required: true, autoFocus: true, placeholder: 'p. ej. SaaS · Summa' },
             { key: 'color', label: 'Color', type: 'color' },
           ]}
         />

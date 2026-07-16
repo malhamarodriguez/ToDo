@@ -1,4 +1,4 @@
-# Núcleo como producto — guía de lanzamiento
+# Summa como producto — guía de lanzamiento
 
 Estado actual (ya publicado):
 
@@ -44,7 +44,7 @@ alter table public.profiles
 
 **B. Stripe (stripe.com):**
 1. Crea la cuenta (modo test primero si quieres probar).
-2. *Product catalog → Add product*: "Núcleo Pro" con 2 precios recurrentes:
+2. *Product catalog → Add product*: "Summa Pro" con 2 precios recurrentes:
    4,99 €/mes y 49 €/año. Opcional: prueba gratis de 14 días en el precio.
 3. *Payment Links → New*: uno por precio. En cada link, en "After payment"
    pon la URL de la app como redirección.

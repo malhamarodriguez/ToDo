@@ -1,3 +1,4 @@
+import './lib/migrate' // Núcleo → Summa: migra claves antes de leer nada
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'

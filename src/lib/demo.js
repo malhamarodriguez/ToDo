@@ -2,12 +2,12 @@
 // Todo vive en localStorage; al crear cuenta se empieza limpio en la nube.
 import { uid } from './utils'
 
-export const DEMO_KEY = 'nucleo:demo'
+export const DEMO_KEY = 'summa:demo'
 export const isDemo = () => localStorage.getItem(DEMO_KEY) === '1'
 export const enterDemo = () => localStorage.setItem(DEMO_KEY, '1')
 export const exitDemo = () => {
   localStorage.removeItem(DEMO_KEY)
-  localStorage.removeItem('nucleo:demo-data')
+  localStorage.removeItem('summa:demo-data')
 }
 
 const d = (offset) => {
@@ -21,7 +21,7 @@ export function demoSeed() {
   const p1 = uid(), p2 = uid(), p3 = uid()
   return {
     projects: [
-      { id: p1, name: 'SaaS · Núcleo', color: '243 76% 64%' },
+      { id: p1, name: 'SaaS · Summa', color: '243 76% 64%' },
       { id: p2, name: 'Consultoría', color: '158 64% 44%' },
       { id: p3, name: 'Marca personal', color: '36 92% 55%' },
     ],

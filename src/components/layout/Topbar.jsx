@@ -12,7 +12,7 @@ function titleFor(route, settings) {
   if (route === 'ajustes') return 'Ajustes'
   if (route === 'informe') return 'Informe mensual'
   if (MODULE_ROUTES.includes(route)) return moduleName(settings, route)
-  return 'Núcleo'
+  return 'Summa'
 }
 
 function FocusChip() {

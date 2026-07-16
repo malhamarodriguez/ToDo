@@ -1,4 +1,4 @@
-# Puesta en marcha — Núcleo
+# Puesta en marcha — Summa
 
 Guía para tener tu app en una **URL** (GitHub Pages) con tus datos
 **sincronizados** entre móvil y ordenador (Supabase). Tiempo: ~10 min.

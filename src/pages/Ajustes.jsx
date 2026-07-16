@@ -42,8 +42,8 @@ export default function Ajustes() {
   }, [])
 
   const reconnect = () => {
-    localStorage.removeItem('nucleo:sb_url')
-    localStorage.removeItem('nucleo:sb_key')
+    localStorage.removeItem('summa:sb_url')
+    localStorage.removeItem('summa:sb_key')
     location.reload()
   }
 
@@ -66,7 +66,7 @@ export default function Ajustes() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `nucleo-copia-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = `summa-copia-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
     toast({ type: 'success', title: 'Copia completa exportada', desc: 'Incluye todos tus datos' })
@@ -89,7 +89,7 @@ export default function Ajustes() {
 
   return (
     <PageContainer className="max-w-4xl">
-      <PageHeader eyebrow="Configuración" title="Ajustes" subtitle="Haz de Núcleo tu espacio." />
+      <PageHeader eyebrow="Configuración" title="Ajustes" subtitle="Haz de Summa tu espacio." />
 
       <div className="space-y-5">
         {/* Plan */}
@@ -134,7 +134,7 @@ export default function Ajustes() {
           {installEvt && (
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent/25 bg-accent/[0.06] px-4 py-3">
               <div>
-                <p className="text-sm font-semibold text-ink">Instala Núcleo como app</p>
+                <p className="text-sm font-semibold text-ink">Instala Summa como app</p>
                 <p className="text-[13px] text-muted">Icono en tu pantalla de inicio, a un toque.</p>
               </div>
               <Button
@@ -418,7 +418,7 @@ export default function Ajustes() {
               variant="danger"
               icon={RotateCcw}
               onClick={() => {
-                localStorage.removeItem('nucleo:settings')
+                localStorage.removeItem('summa:settings')
                 location.reload()
               }}
             >

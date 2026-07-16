@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { ACCENTS, applyTheme, resolveMode } from '../lib/theme'
-import { MODULES, HOME_WIDGETS, QUICK_ACTIONS } from '../lib/data'
+import { MODULES, HOME_WIDGETS, QUICK_ACTIONS, moduleName } from '../lib/data'
 import { uid, configureMoney } from '../lib/utils'
 
 const FONT_SCALES = { sm: '14.5px', md: '16px', lg: '17.5px' }
@@ -33,7 +33,7 @@ const DEFAULT_SETTINGS = {
 
 function loadSettings() {
   try {
-    const raw = JSON.parse(localStorage.getItem('nucleo:settings') || '{}')
+    const raw = JSON.parse(localStorage.getItem('summa:settings') || '{}')
     return { ...DEFAULT_SETTINGS, ...raw }
   } catch {
     return DEFAULT_SETTINGS
@@ -60,7 +60,7 @@ export function AppProvider({ children }) {
   const themingTimer = useRef()
 
   useEffect(() => {
-    localStorage.setItem('nucleo:settings', JSON.stringify(settings))
+    localStorage.setItem('summa:settings', JSON.stringify(settings))
     document.documentElement.classList.add('theming')
     applyTheme(settings)
     // Preferencias personales: tamaño de texto, moneda y privacidad
@@ -83,6 +83,14 @@ export function AppProvider({ children }) {
       navigate(settings.startModule)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Título del documento por ruta: "Summa — Finanzas", etc.
+  useEffect(() => {
+    const FIXED = { inicio: 'Panel', ajustes: 'Ajustes', informe: 'Informe', acceso: 'Acceso', privacidad: 'Privacidad', terminos: 'Términos' }
+    const isModule = MODULES.some((m) => m.id === route)
+    const label = FIXED[route] || (isModule ? moduleName(settings, route) : '')
+    document.title = label ? `Summa — ${label}` : 'Summa — Todo cuenta.'
+  }, [route, settings.moduleNames]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (settings.mode !== 'system') return

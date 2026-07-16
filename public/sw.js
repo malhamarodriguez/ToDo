@@ -1,9 +1,9 @@
-/* Núcleo · service worker
+/* Summa · service worker
    - Navegaciones e index: red primero (para recibir versiones nuevas),
      con caché de respaldo si no hay conexión.
    - Recursos estáticos (js/css/fuentes/iconos): caché primero.
    - Nunca toca peticiones a otros orígenes (Supabase va siempre a red). */
-const VERSION = 'nucleo-v1'
+const VERSION = 'summa-v1'
 
 self.addEventListener('install', () => self.skipWaiting())
 

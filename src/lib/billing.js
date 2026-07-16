@@ -2,8 +2,8 @@
 // Cuando existan, el botón "Mejorar a Pro" abre el checkout directamente.
 // Pega aquí los enlaces (https://buy.stripe.com/...) y despliega.
 export const PAYMENT_LINKS = {
-  monthly: '', // Núcleo Pro · 4,99 €/mes
-  yearly: '', // Núcleo Pro · 49 €/año
+  monthly: '', // Summa Pro · 4,99 €/mes
+  yearly: '', // Summa Pro · 49 €/año
 }
 
 // Añade al enlace la referencia del usuario para que el webhook

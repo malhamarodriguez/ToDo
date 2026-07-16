@@ -37,8 +37,8 @@ export function AuthScreen() {
   }
 
   const reconfig = () => {
-    localStorage.removeItem('nucleo:sb_url')
-    localStorage.removeItem('nucleo:sb_key')
+    localStorage.removeItem('summa:sb_url')
+    localStorage.removeItem('summa:sb_key')
     location.reload()
   }
 

@@ -1,4 +1,4 @@
-# Núcleo
+# Summa
 
 **Panel personal todo‑en‑uno para autónomos y emprendedores.** Negocio, finanzas,
 deporte y objetivos en un solo sitio, con foco absoluto en _lo de hoy_.

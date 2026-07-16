@@ -37,7 +37,7 @@ function HeroMock() {
           {['bg-danger/70', 'bg-warning/70', 'bg-success/70'].map((c) => (
             <span key={c} className={cx('h-2.5 w-2.5 rounded-full', c)} />
           ))}
-          <span className="mx-auto rounded-md bg-surface px-8 py-0.5 text-2xs text-subtle">nucleo — centro de mando</span>
+          <span className="mx-auto rounded-md bg-surface px-8 py-0.5 text-2xs text-subtle">summa — todo cuenta</span>
         </div>
         <div className="grid grid-cols-12 gap-3 p-4 sm:p-5">
           <div className="col-span-3 hidden space-y-2 sm:block">
@@ -140,7 +140,7 @@ export default function Landing() {
           <span className="text-accent">Todo bajo control.</span>
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
-          Núcleo une tus tareas, finanzas, entrenos y metas en un panel rápido y
+          Summa une tus tareas, finanzas, entrenos y metas en un panel rápido y
           precioso. Hecho para autónomos y emprendedores que lo quieren todo en un sitio.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -200,7 +200,7 @@ export default function Landing() {
 
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-6 text-[13px] text-subtle">
-          <span className="flex items-center gap-2"><Mark size={18} /> © {new Date().getFullYear()} Núcleo</span>
+          <span className="flex items-center gap-2"><Mark size={18} /> © {new Date().getFullYear()} Summa</span>
           <div className="flex gap-5">
             <button onClick={() => navigate('privacidad')} className="transition-colors hover:text-ink">Privacidad</button>
             <button onClick={() => navigate('terminos')} className="transition-colors hover:text-ink">Términos</button>
@@ -223,14 +223,14 @@ export function Legal({ page }) {
         <div className="prose-sm mt-6 space-y-4 text-[15px] leading-relaxed text-muted">
           {isPriv ? (
             <>
-              <p><strong className="text-ink">Tus datos son tuyos.</strong> Núcleo guarda la información que introduces (tareas, finanzas, entrenos, notas) en una base de datos con aislamiento por usuario: solo tu cuenta puede leer tus filas.</p>
+              <p><strong className="text-ink">Tus datos son tuyos.</strong> Summa guarda la información que introduces (tareas, finanzas, entrenos, notas) en una base de datos con aislamiento por usuario: solo tu cuenta puede leer tus filas.</p>
               <p>Usamos tu email únicamente para autenticarte. No vendemos datos, no hay publicidad y no compartimos información con terceros.</p>
               <p>Puedes exportar una copia completa de tus datos desde Ajustes en cualquier momento, y solicitar el borrado total de tu cuenta.</p>
               <p>La demo funciona solo en tu navegador y no envía nada a nuestros servidores.</p>
             </>
           ) : (
             <>
-              <p>Núcleo se ofrece «tal cual», con un plan gratuito y un plan Pro de pago. Puedes cancelar el plan Pro en cualquier momento y seguirás teniendo acceso hasta el final del periodo pagado.</p>
+              <p>Summa se ofrece «tal cual», con un plan gratuito y un plan Pro de pago. Puedes cancelar el plan Pro en cualquier momento y seguirás teniendo acceso hasta el final del periodo pagado.</p>
               <p>Eres responsable del contenido que guardas. No uses el servicio para actividades ilegales.</p>
               <p>Hacemos copias de seguridad razonables, pero te recomendamos exportar tus datos periódicamente desde Ajustes.</p>
               <p>Podemos actualizar estas condiciones; si el cambio es relevante, lo verás anunciado en la app.</p>

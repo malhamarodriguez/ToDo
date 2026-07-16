@@ -33,7 +33,7 @@ export function UpgradeModal() {
     <Modal
       open
       onClose={close}
-      title="Pasa a Núcleo Pro"
+      title="Pasa a Summa Pro"
       subtitle={reason || 'Desbloquea todo el potencial de tu centro de mando'}
       footer={
         <>
