@@ -11,6 +11,7 @@ function titleFor(route, settings) {
   if (route === 'inicio' || !route) return 'Panel central'
   if (route === 'ajustes') return 'Ajustes'
   if (route === 'informe') return 'Informe mensual'
+  if (route === 'admin') return 'Gestión'
   if (MODULE_ROUTES.includes(route)) return moduleName(settings, route)
   return 'Summa'
 }

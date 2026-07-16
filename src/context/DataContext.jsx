@@ -22,6 +22,7 @@ export function DataProvider({ children, demo = false }) {
   const app = useApp()
   const [data, setData] = useState(empty)
   const [profile, setProfile] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
   const lastSettings = useRef(null)
   const lastFetch = useRef(0)
@@ -97,6 +98,26 @@ export function DataProvider({ children, demo = false }) {
     }
     fetchAll(user.id)
   }, [user, fetchAll, demo])
+
+  // Presencia y rol de creador. Silencioso a propósito: si el SQL del
+  // módulo de gestión aún no se ha ejecutado, la app sigue funcionando igual.
+  useEffect(() => {
+    if (demo || !user) {
+      setIsAdmin(false)
+      return
+    }
+    supabase
+      .from('profiles')
+      .upsert({ id: user.id, email: user.email || '', last_seen_at: new Date().toISOString() })
+      .then(() => {})
+    supabase.rpc('is_admin').then(({ data: ok }) => setIsAdmin(Boolean(ok)))
+  }, [user, demo])
+
+  const adminOverview = useCallback(async () => {
+    const { data: ov, error } = await supabase.rpc('admin_overview')
+    if (error) throw new Error(error.message)
+    return ov
+  }, [])
 
   // Refresco silencioso al volver a la pestaña
   useEffect(() => {
@@ -252,6 +273,6 @@ export function DataProvider({ children, demo = false }) {
 
   const isPro = demo || profile?.plan === 'pro'
 
-  const value = { ...data, loading, demo, profile, isPro, add, update, remove, toggleTask, moveTask, refetch }
+  const value = { ...data, loading, demo, profile, isPro, isAdmin, adminOverview, add, update, remove, toggleTask, moveTask, refetch }
   return <DataCtx.Provider value={value}>{children}</DataCtx.Provider>
 }

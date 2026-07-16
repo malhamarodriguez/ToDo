@@ -1,6 +1,7 @@
 import { createPortal } from 'react-dom'
-import { Menu, Settings, X, Plus } from 'lucide-react'
+import { Menu, Settings, X, Plus, ShieldCheck } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
+import { useData } from '../../context/DataContext'
 import { MODULES, moduleName, moduleIcon } from '../../lib/data'
 import { ICONS } from './icons'
 import { Logo } from './Logo'
@@ -56,6 +57,7 @@ export function MobileTabBar() {
 
 export function MobileDrawer() {
   const { navOpen, setNavOpen, route, navigate, settings } = useApp()
+  const { isAdmin } = useData()
   if (!navOpen) return null
   const mods = settings.modules
     .filter((m) => !m.hidden)
@@ -93,6 +95,19 @@ export function MobileDrawer() {
               </button>
             )
           })}
+
+          {isAdmin && (
+            <button
+              onClick={() => navigate('admin')}
+              className={cx(
+                'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors',
+                route === 'admin' ? 'bg-accent/12 text-accent' : 'text-muted hover:bg-surface-2 hover:text-ink'
+              )}
+            >
+              <ShieldCheck size={20} strokeWidth={route === 'admin' ? 2.4 : 2} />
+              Gestión
+            </button>
+          )}
         </nav>
         <div className="border-t border-line p-3">
           <button

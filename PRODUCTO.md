@@ -34,6 +34,24 @@ update public.profiles set plan = 'pro'
 where id = (select id from auth.users where email = 'TU_EMAIL_AQUI');
 ```
 
+## 1b) Módulo de gestión (solo el creador)
+
+Summa incluye un espacio **Gestión** que solo ve tu cuenta: usuarios totales,
+altas por semana, cuentas activas, plan de cada usuario y uso global de la app
+(recuentos, nunca el contenido privado de nadie).
+
+Para activarlo:
+
+1. Abre `supabase/admin.sql`, sustituye `TU_EMAIL` por el email con el que
+   entras en Summa y ejecútalo en Supabase → SQL Editor → Run.
+2. Recarga Summa con tu sesión iniciada: verás "Gestión" en el menú lateral
+   (y en "Más" en el móvil).
+
+Cómo queda protegido: la lista de administradores vive en una tabla sin
+policies (ilegible desde la app) y las funciones `is_admin()` /
+`admin_overview()` comprueban en el servidor quién las llama. Aunque otro
+usuario adivine la URL `#/admin`, solo verá un aviso vacío.
+
 ## 2) Cobrar con Stripe — pasos exactos
 
 Todo el código ya está listo en el repo:

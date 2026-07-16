@@ -88,7 +88,7 @@ export function AppProvider({ children }) {
 
   // Título del documento por ruta: "Summa — Finanzas", etc.
   useEffect(() => {
-    const FIXED = { inicio: 'Panel', ajustes: 'Ajustes', informe: 'Informe', acceso: 'Acceso', privacidad: 'Privacidad', terminos: 'Términos' }
+    const FIXED = { inicio: 'Panel', ajustes: 'Ajustes', informe: 'Informe', admin: 'Gestión', acceso: 'Acceso', privacidad: 'Privacidad', terminos: 'Términos' }
     const isModule = MODULES.some((m) => m.id === route)
     const label = FIXED[route] || (isModule ? moduleName(settings, route) : '')
     document.title = label ? `Summa — ${label}` : 'Summa — Todo cuenta.'

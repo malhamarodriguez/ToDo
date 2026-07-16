@@ -11,6 +11,7 @@ import Diario from './pages/Diario'
 import Calendario from './pages/Calendario'
 import Ajustes from './pages/Ajustes'
 import Informe from './pages/Informe'
+import Admin from './pages/Admin'
 
 const PAGES = {
   inicio: Inicio,
@@ -22,6 +23,7 @@ const PAGES = {
   calendario: Calendario,
   ajustes: Ajustes,
   informe: Informe,
+  admin: Admin,
 }
 
 function Router() {

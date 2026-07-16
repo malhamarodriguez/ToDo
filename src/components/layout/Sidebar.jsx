@@ -1,4 +1,4 @@
-import { Settings, Plus } from 'lucide-react'
+import { Settings, Plus, ShieldCheck } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
 import { MODULES, moduleName, moduleIcon } from '../../lib/data'
@@ -32,7 +32,7 @@ function NavItem({ mod, active, onClick }) {
 
 export function Sidebar() {
   const { route, navigate, settings, setQuickAdd } = useApp()
-  const { movements, holdings } = useData()
+  const { movements, holdings, isAdmin } = useData()
   const month = todayISO().slice(0, 7)
   const balanceMes = movements
     .filter((m) => String(m.date).slice(0, 7) === month)
@@ -68,6 +68,27 @@ export function Sidebar() {
         {mods.map((m) => (
           <NavItem key={m.id} mod={m} active={route === m.id} onClick={() => navigate(m.id)} />
         ))}
+
+        {isAdmin && (
+          <>
+            <p className="px-3 pb-1.5 pt-5 font-mono text-2xs font-medium uppercase tracking-[0.14em] text-subtle">
+              Creador
+            </p>
+            <button
+              onClick={() => navigate('admin')}
+              className={cx(
+                'group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                route === 'admin' ? 'bg-accent/12 text-accent' : 'text-muted hover:bg-surface-2 hover:text-ink'
+              )}
+            >
+              {route === 'admin' && (
+                <span className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-accent" />
+              )}
+              <ShieldCheck size={19} strokeWidth={route === 'admin' ? 2.4 : 2} className="shrink-0" />
+              <span>Gestión</span>
+            </button>
+          </>
+        )}
       </nav>
 
       {/* Resumen financiero discreto */}
