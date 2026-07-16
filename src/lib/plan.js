@@ -24,8 +24,12 @@ export const PRO_FEATURES = [
 
 export const PRO_PRICE = { monthly: '4,99 €', yearly: '49 €' }
 
+// FASE DE PRUEBA: todo gratis y sin límites. Cuando se activen los
+// cobros, poner BETA_FREE en false y los límites Free vuelven solos.
+export const BETA_FREE = true
+
 export function canCreate(kind, count, isPro) {
-  if (isPro) return true
+  if (BETA_FREE || isPro) return true
   const limit = FREE_LIMITS[kind]
   return limit == null || count < limit
 }

@@ -1,5 +1,10 @@
 # Summa como producto — guía de lanzamiento
 
+> **ESTADO ACTUAL: BETA GRATUITA.** Los precios están retirados de la landing
+> y todos los límites del plan Gratis desactivados (`BETA_FREE = true` en
+> `src/lib/plan.js`). Para encender cobros: poner `BETA_FREE = false`,
+> restaurar la sección de precios de la landing y seguir la guía Stripe de abajo.
+
 Estado actual (ya publicado):
 
 - **Landing pública** con precios y CTA en la raíz; la app vive tras el login.

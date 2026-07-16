@@ -93,24 +93,15 @@ export default function Ajustes() {
 
       <div className="space-y-5">
         {/* Plan */}
-        <Panel title="Tu plan" subtitle="Gestión de la suscripción" icon={Sparkles}>
+        <Panel title="Tu plan" subtitle="Fase de prueba" icon={Sparkles}>
           <div className="flex flex-wrap items-center gap-3">
-            <span className={cx(
-              'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] font-semibold',
-              isPro ? 'border-accent/40 bg-accent/12 text-accent' : 'border-line bg-surface-2 text-muted'
-            )}>
-              {isPro ? '✦ Pro' : 'Gratis'}
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-success/40 bg-success/12 px-3 py-1 text-[13px] font-semibold text-success">
+              ✦ Beta gratuita
             </span>
             <p className="text-[13px] text-muted">
-              {isPro
-                ? 'Tienes acceso a todo, sin límites.'
-                : `Proyectos (${FREE_LIMITS.projects}), clientes (${FREE_LIMITS.clients}) y metas (${FREE_LIMITS.goals}) limitados.`}
+              Summa es <strong className="text-ink">completamente gratis</strong> mientras estamos en fase de
+              prueba: todas las funciones, sin límites y sin tarjeta.
             </p>
-            {!isPro && (
-              <Button variant="primary" size="sm" className="ml-auto" onClick={() => setUpgradeOpen(true)}>
-                Mejorar a Pro
-              </Button>
-            )}
           </div>
         </Panel>
 

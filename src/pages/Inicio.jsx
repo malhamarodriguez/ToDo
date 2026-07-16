@@ -4,7 +4,7 @@ import {
   Wallet, TrendingUp, CalendarClock, Target, Play, Timer, X, Sparkles, Banknote, Flame,
 } from 'lucide-react'
 import { toggleHabitLog, habitStreak, habitWeek, habitDoneOn, HABIT_COLORS } from '../lib/habits'
-import { canCreate } from '../lib/plan'
+import { BETA_FREE } from '../lib/plan'
 import { uid, todayISO as tISO } from '../lib/utils'
 import { useApp } from '../context/AppContext'
 import { useData } from '../context/DataContext'
@@ -104,7 +104,7 @@ function HabitsWidget() {
   const addHabit = () => {
     const name = draft.trim()
     if (!name) return
-    if (!isPro && habits.length >= 3) {
+    if (!BETA_FREE && !isPro && habits.length >= 3) {
       return setUpgradeOpen('El plan Gratis incluye 3 hábitos — pasa a Pro para crear ilimitados.')
     }
     update({ habits: [...habits, { id: uid(), name, color: HABIT_COLORS[habits.length % HABIT_COLORS.length] }] })

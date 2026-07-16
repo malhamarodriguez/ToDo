@@ -5,7 +5,6 @@ import {
 import { useApp } from '../context/AppContext'
 import { Logo, Mark } from '../components/layout/Logo'
 import { Button, Badge } from '../components/ui'
-import { FREE_LIMITS, PRO_PRICE } from '../lib/plan'
 import { enterDemo } from '../lib/demo'
 import { cx } from '../lib/utils'
 
@@ -89,36 +88,28 @@ const TRUST = [
   { icon: ShieldCheck, t: 'Tus datos, tuyos', d: 'Cifrado en tránsito, aislamiento por usuario y exportación completa.' },
 ]
 
-function Pricing({ navigate }) {
+function FreeBeta({ navigate }) {
   return (
-    <section className="mx-auto max-w-4xl px-5 py-20">
-      <h2 className="text-center font-display text-3xl font-bold tracking-tight text-ink">Precios simples</h2>
-      <p className="mx-auto mt-2 max-w-md text-center text-muted">Empieza gratis para siempre. Pásate a Pro cuando tu negocio te lo pida.</p>
-      <div className="mt-10 grid gap-5 sm:grid-cols-2">
-        <div className="rounded-2xl border border-line bg-surface p-6">
-          <h3 className="font-display text-lg font-bold text-ink">Gratis</h3>
-          <p className="mt-1 text-[13px] text-muted">Para organizarte a diario</p>
-          <p className="mt-4 font-display text-4xl font-bold text-ink">0 €</p>
-          <ul className="mt-5 space-y-2.5 text-sm text-muted">
-            {['Tareas y calendario ilimitados', `Hasta ${FREE_LIMITS.projects} proyectos y ${FREE_LIMITS.clients} clientes`, 'Finanzas, deporte, metas y diario', 'Sincronización multi-dispositivo'].map((f) => (
-              <li key={f} className="flex gap-2.5"><Check size={16} className="mt-0.5 shrink-0 text-success" />{f}</li>
-            ))}
-          </ul>
-          <Button variant="secondary" className="mt-6 w-full" onClick={() => navigate('acceso')}>Crear cuenta</Button>
-        </div>
-        <div className="relative rounded-2xl border border-accent/40 bg-surface p-6 shadow-glow">
-          <Badge tone="accent" className="absolute -top-2.5 right-5">Recomendado</Badge>
-          <h3 className="font-display text-lg font-bold text-ink">Pro</h3>
-          <p className="mt-1 text-[13px] text-muted">Para dirigir tu negocio</p>
-          <p className="mt-4 font-display text-4xl font-bold text-ink">{PRO_PRICE.monthly}<span className="text-base font-medium text-muted"> /mes</span></p>
-          <p className="text-2xs text-subtle">o {PRO_PRICE.yearly}/año · 14 días de prueba</p>
-          <ul className="mt-5 space-y-2.5 text-sm text-muted">
-            {['Todo lo del plan Gratis, sin límites', 'Proyectos, clientes y presupuestos ilimitados', 'Informes y plantillas (acceso anticipado)', 'Próximamente: IA y conexión bancaria'].map((f) => (
-              <li key={f} className="flex gap-2.5"><Check size={16} className="mt-0.5 shrink-0 text-accent" />{f}</li>
-            ))}
-          </ul>
-          <Button variant="primary" icon={Sparkles} className="mt-6 w-full" onClick={() => navigate('acceso')}>Empezar prueba</Button>
-        </div>
+    <section className="mx-auto max-w-3xl px-5 py-20">
+      <div className="rounded-3xl border border-success/30 bg-success/[0.06] px-6 py-12 text-center">
+        <span className="inline-flex items-center gap-2 rounded-full border border-success/40 bg-success/12 px-3.5 py-1.5 text-2xs font-semibold uppercase tracking-[0.14em] text-success">
+          Fase de prueba
+        </span>
+        <h2 className="mt-5 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+          Completamente gratis.
+        </h2>
+        <p className="mx-auto mt-3 max-w-md text-muted">
+          Mientras Summa está en fase de prueba, tienes <strong className="text-ink">todas las
+          funciones sin límites y sin tarjeta</strong>. Tu opinión es el precio: ayúdanos a hacerlo mejor.
+        </p>
+        <ul className="mx-auto mt-6 grid max-w-md gap-2.5 text-left text-sm text-muted sm:grid-cols-2">
+          {['Todos los módulos, sin límites', 'Sincronización multi-dispositivo', 'Copia de seguridad completa', 'Sin tarjeta, sin permanencia'].map((f) => (
+            <li key={f} className="flex gap-2.5"><Check size={16} className="mt-0.5 shrink-0 text-success" />{f}</li>
+          ))}
+        </ul>
+        <Button variant="primary" size="lg" className="mt-8" onClick={() => navigate('acceso')}>
+          Crear cuenta gratis
+        </Button>
       </div>
     </section>
   )
@@ -183,7 +174,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <Pricing navigate={navigate} />
+      <FreeBeta navigate={navigate} />
 
       {/* CTA final */}
       <section className="mx-auto max-w-3xl px-5 pb-24 text-center">
