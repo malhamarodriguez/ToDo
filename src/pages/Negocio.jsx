@@ -11,7 +11,7 @@ import { cx, taskOverdue } from '../lib/utils'
 import { canCreate, FREE_LIMITS } from '../lib/plan'
 
 export default function Negocio() {
-  const { setQuickAdd, setUpgradeOpen } = useApp()
+  const { setQuickAdd, setUpgradeOpen, settings } = useApp()
   const { tasks, projects, remove, isPro } = useData()
   const newProject = () => {
     if (!canCreate('projects', projects.length, isPro)) {
@@ -19,7 +19,7 @@ export default function Negocio() {
     }
     setProjModal(true)
   }
-  const [view, setView] = useState('kanban')
+  const [view, setView] = useState(() => settings.moduleViews?.negocio || 'kanban')
   const [project, setProject] = useState('all')
   const [priority, setPriority] = useState('all')
   const [projModal, setProjModal] = useState(false)

@@ -1,14 +1,14 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { applyTheme, resolveMode } from '../lib/theme'
 import { MODULES, HOME_WIDGETS, QUICK_ACTIONS, moduleName } from '../lib/data'
-import { uid, configureMoney } from '../lib/utils'
+import { uid, configureMoney, configureLocale } from '../lib/utils'
 
 const FONT_SCALES = { sm: '14.5px', md: '16px', lg: '17.5px', xl: '19px' }
 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
-const DEFAULT_SETTINGS = {
+export const DEFAULT_SETTINGS = {
   schemaVersion: 2,
   name: '',
   role: '',
@@ -42,7 +42,22 @@ const DEFAULT_SETTINGS = {
   bgFx: null, // blooms | solido | degradado | malla | puntos
   moduleAccents: {}, // { finanzas: {hsl,fg}, ... }
   appName: '', // nombre de la instancia ('' = Summa)
+  appIcon: '', // emoji para el logo ('' = Σ)
   greeting: '', // saludo con {nombre} {fecha} {hora}
+  sidebarCollapsed: false,
+  // Ajuste fino por módulo
+  weekStart: 'lunes', // lunes | domingo
+  timeFormat: '24h', // 24h | 12h
+  numberLocale: 'es-ES', // es-ES (1.234,56) | en-US (1,234.56)
+  doneBehavior: 'tachar', // tachar | ocultar (tareas completadas)
+  priorityNames: {}, // { alta: 'Urgente', ... }
+  priorityColors: {}, // { alta: '0 80% 60%', ... }
+  units: { weight: 'kg', distance: 'km' },
+  goalStyle: 'barra', // barra | anillo | numero
+  journalFont: 'sans', // sans | serif
+  journalWidth: 'normal', // normal | estrecho
+  financeCategories: [], // [{ name, color }]
+  moduleViews: {}, // { negocio: 'lista', ... }
 }
 
 // Migración de esquema: v1 (pre-presets) → v2. Nunca borra nada
@@ -95,7 +110,12 @@ export function AppProvider({ children }) {
     applyTheme(settings, route)
     // Preferencias personales: tamaño de texto, moneda y privacidad
     document.documentElement.style.fontSize = FONT_SCALES[settings.fontScale] || FONT_SCALES.md
-    configureMoney({ currency: settings.currency || 'EUR', privacy: Boolean(settings.privacy) })
+    configureMoney({
+      currency: settings.currency || 'EUR',
+      privacy: Boolean(settings.privacy),
+      locale: settings.numberLocale || 'es-ES',
+    })
+    configureLocale({ timeFormat: settings.timeFormat || '24h', weekStart: settings.weekStart || 'lunes' })
     clearTimeout(themingTimer.current)
     themingTimer.current = setTimeout(
       () => document.documentElement.classList.remove('theming'),

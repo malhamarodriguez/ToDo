@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Plus, Smile, Meh, Battery, Sparkles, StickyNote, Trash2 } from 'lucide-react'
 import { useData } from '../context/DataContext'
+import { useApp } from '../context/AppContext'
+import { loadFont } from '../lib/theme'
 import { MOODS, COLOR_CHOICES } from '../lib/data'
 import { PageContainer, PageHeader } from '../components/layout/Page'
 import { Card, CardBody, Button, Textarea, Badge, SectionTitle, EmptyState } from '../components/ui'
@@ -11,6 +13,15 @@ const MOOD_ICONS = { enfocado: Sparkles, motivado: Smile, cansado: Battery, neut
 
 export default function Diario() {
   const { journal, notes, add, remove } = useData()
+  const { settings } = useApp()
+  // Preferencias de lectura del diario (Ajustes → Módulos)
+  const readStyle = {
+    fontFamily: settings.journalFont === 'serif' ? "'Source Serif 4 Variable', Georgia, serif" : undefined,
+    fontSize: settings.journalFont === 'serif' ? '14.5px' : undefined,
+  }
+  useEffect(() => {
+    if (settings.journalFont === 'serif') loadFont('serif')
+  }, [settings.journalFont])
   const [draft, setDraft] = useState('')
   const [entryOpen, setEntryOpen] = useState(false)
   const [noteOpen, setNoteOpen] = useState(null)
@@ -34,7 +45,7 @@ export default function Diario() {
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <div className="lg:col-span-7">
+        <div className={settings.journalWidth === 'estrecho' ? 'mx-auto w-full max-w-xl lg:col-span-7' : 'lg:col-span-7'}>
           <SectionTitle>Entradas recientes</SectionTitle>
           {sorted.length ? (
             <div className="relative space-y-4 before:absolute before:left-[7px] before:top-2 before:h-[calc(100%-1rem)] before:w-px before:bg-line">
@@ -51,7 +62,7 @@ export default function Diario() {
                           <Badge tone={mood.tone} icon={MoodIcon}>{mood.label}</Badge>
                         </div>
                         {e.title && <h3 className="text-[15px] font-semibold text-ink">{e.title}</h3>}
-                        {e.body && <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{e.body}</p>}
+                        {e.body && <p className="mt-1.5 text-[13px] leading-relaxed text-muted" style={readStyle}>{e.body}</p>}
                       </CardBody>
                     </Card>
                   </div>

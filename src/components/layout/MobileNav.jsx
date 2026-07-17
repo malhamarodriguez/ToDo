@@ -2,8 +2,8 @@ import { createPortal } from 'react-dom'
 import { Menu, Settings, X, Plus, ShieldCheck } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
-import { MODULES, moduleName, moduleIcon } from '../../lib/data'
-import { ICONS } from './icons'
+import { MODULES, moduleName } from '../../lib/data'
+import { ModuleGlyph } from './ModuleGlyph'
 import { Logo } from './Logo'
 import { Avatar } from '../ui'
 import { cx } from '../../lib/utils'
@@ -27,7 +27,6 @@ export function MobileTabBar() {
       </button>
       <nav className="fixed inset-x-0 bottom-0 z-30 flex items-stretch border-t border-line glass pb-[env(safe-area-inset-bottom)] lg:hidden">
       {items.map((m) => {
-        const Icon = ICONS[moduleIcon(settings, m.id)]
         const active = route === m.id
         return (
           <button
@@ -38,7 +37,7 @@ export function MobileTabBar() {
               active ? 'text-accent' : 'text-subtle'
             )}
           >
-            <Icon size={21} strokeWidth={active ? 2.4 : 2} />
+            <ModuleGlyph settings={settings} id={m.id} size={21} strokeWidth={active ? 2.4 : 2} />
             {moduleName(settings, m.id)}
           </button>
         )
@@ -69,7 +68,7 @@ export function MobileDrawer() {
       <div className="absolute inset-0 bg-black/55 backdrop-blur-sm animate-fade-in" onClick={() => setNavOpen(false)} />
       <div className="absolute inset-y-0 left-0 flex w-[82%] max-w-xs flex-col border-r border-line bg-surface shadow-xl animate-fade-up">
         <div className="flex items-center justify-between px-5 pb-2 pt-6">
-          <Logo onClick={() => navigate('inicio')} />
+          <Logo onClick={() => navigate('inicio')} instance={{ name: settings.appName, icon: settings.appIcon }} />
           <button
             onClick={() => setNavOpen(false)}
             className="grid h-9 w-9 place-items-center rounded-lg text-muted hover:bg-surface-2 hover:text-ink"
@@ -79,7 +78,6 @@ export function MobileDrawer() {
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
           {mods.map((m) => {
-            const Icon = ICONS[moduleIcon(settings, m.id)]
             const active = route === m.id
             return (
               <button
@@ -90,7 +88,7 @@ export function MobileDrawer() {
                   active ? 'bg-accent/12 text-accent' : 'text-muted hover:bg-surface-2 hover:text-ink'
                 )}
               >
-                <Icon size={20} strokeWidth={active ? 2.4 : 2} />
+                <ModuleGlyph settings={settings} id={m.id} size={20} strokeWidth={active ? 2.4 : 2} />
                 {moduleName(settings, m.id)}
               </button>
             )

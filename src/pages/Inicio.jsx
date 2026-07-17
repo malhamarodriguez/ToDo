@@ -10,8 +10,8 @@ import { useApp } from '../context/AppContext'
 import { useData } from '../context/DataContext'
 import { PageContainer } from '../components/layout/Page'
 import { TaskRow } from '../components/app/TaskRow'
-import { Card, CardHeader, CardBody, Button, Badge, ProgressBar, Switch, EmptyState } from '../components/ui'
-import { saludo, longDate, signedEur, eur, clamp, cx, capitalize, todayISO, taskOverdue, taskToday } from '../lib/utils'
+import { Card, CardHeader, CardBody, Button, Badge, ProgressBar, ProgressRing, Switch, EmptyState } from '../components/ui'
+import { renderGreeting, longDate, signedEur, eur, clamp, cx, capitalize, todayISO, taskOverdue, taskToday, fmtTime } from '../lib/utils'
 
 function goalPct(g) {
   if (g.type === 'percent') return Math.round(g.value)
@@ -217,6 +217,10 @@ export default function Inicio() {
 
   // Bloques del Inicio configurables (Ajustes → Inicio a tu medida)
   const showW = (id) => !(settings.homeWidgets || []).find((w) => w.id === id)?.hidden
+  const wOrder = (id) => {
+    const i = (settings.homeWidgets || []).findIndex((w) => w.id === id)
+    return i === -1 ? 99 : i
+  }
 
   const isSunday = new Date().getDay() === 0
   const quickHidden = (id) => Boolean((settings.quickActions || []).find((q) => q.id === id)?.hidden)
@@ -232,8 +236,8 @@ export default function Inicio() {
     <PageContainer>
       {/* Saludo */}
       <div className="mb-6 animate-fade-up">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-[34px]">
-          {saludo()}{settings.name ? `, ${settings.name}` : ''}.
+        <h1 className="font-display text-3xl tracking-tight text-ink sm:text-[34px]">
+          {renderGreeting(settings.greeting, settings.name)}
         </h1>
         <p className="mt-1.5 text-sm text-muted">
           {capitalize(longDate())} ·{' '}
@@ -331,7 +335,7 @@ export default function Inicio() {
                       </div>
                     ))}
                   </div>
-                  {doneToday.length > 0 && (
+                  {doneToday.length > 0 && settings.doneBehavior !== 'ocultar' && (
                     <div className="mt-1 space-y-0.5 border-t border-line pt-1">
                       {doneToday.map((t) => (
                         <TaskRow key={t.id} task={t} compact />
@@ -363,93 +367,114 @@ export default function Inicio() {
           )}
         </div>
 
-        {/* Rail derecho */}
+        {/* Rail derecho: los bloques respetan el orden elegido en Ajustes */}
         <div className="space-y-5 lg:col-span-4">
-          {showW('workout') && (
-          <Card
-            className={cx(
-              'overflow-hidden animate-fade-up transition-colors duration-300',
-              entrenoHoy && 'border-accent/40 bg-accent/[0.06]'
-            )}
-            style={{ animationDelay: '120ms' }}
-          >
-            <CardBody className="flex items-center gap-4">
-              <div
-                className={cx(
-                  'grid h-12 w-12 shrink-0 place-items-center rounded-xl transition-all duration-300',
-                  entrenoHoy ? 'bg-accent text-accent-fg shadow-glow' : 'bg-surface-2 text-muted'
-                )}
-              >
-                <span key={String(entrenoHoy)} className="animate-scale-in">
-                  {entrenoHoy ? <Check size={22} strokeWidth={2.6} /> : <Dumbbell size={22} />}
-                </span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-ink">Entreno de hoy</p>
-                <p className="mt-0.5 text-[13px] text-muted">
-                  {entrenoHoy ? 'Completado · ¡bien hecho!' : 'Aún sin marcar'}
-                </p>
-              </div>
-              <Switch checked={entrenoHoy} onChange={toggleEntreno} size="lg" />
-            </CardBody>
-          </Card>
-          )}
-
-          {showW('habits') && <HabitsWidget />}
-
-          {showW('agenda') && (
-          <Card className="animate-fade-up" style={{ animationDelay: '160ms' }}>
-            <CardHeader
-              title="Agenda de hoy"
-              icon={CalendarClock}
-              action={<Button variant="ghost" size="icon-sm" icon={ChevronRight} onClick={() => navigate('calendario')} />}
-            />
-            <CardBody className="space-y-1 pt-2">
-              {agenda.length ? (
-                agenda.map((e) => (
-                  <div key={e.id} className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-surface-2">
-                    <div className="w-12 shrink-0 text-sm font-semibold tabular text-ink">{e.time || '—'}</div>
-                    <span className="h-8 w-0.5 rounded-full" style={{ background: `hsl(${e.color})` }} />
+          {[
+            {
+              id: 'workout',
+              el: (
+                <Card
+                  className={cx(
+                    'overflow-hidden animate-fade-up transition-colors duration-300',
+                    entrenoHoy && 'border-accent/40 bg-accent/[0.06]'
+                  )}
+                  style={{ animationDelay: '120ms' }}
+                >
+                  <CardBody className="flex items-center gap-4">
+                    <div
+                      className={cx(
+                        'grid h-12 w-12 shrink-0 place-items-center rounded-xl transition-all duration-300',
+                        entrenoHoy ? 'bg-accent text-accent-fg shadow-glow' : 'bg-surface-2 text-muted'
+                      )}
+                    >
+                      <span key={String(entrenoHoy)} className="animate-scale-in">
+                        {entrenoHoy ? <Check size={22} strokeWidth={2.6} /> : <Dumbbell size={22} />}
+                      </span>
+                    </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-ink">{e.title}</p>
-                      {e.sub && <p className="truncate text-2xs text-subtle">{e.sub}</p>}
+                      <p className="text-sm font-semibold text-ink">Entreno de hoy</p>
+                      <p className="mt-0.5 text-[13px] text-muted">
+                        {entrenoHoy ? 'Completado · ¡bien hecho!' : 'Aún sin marcar'}
+                      </p>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <EmptyState icon={CalendarClock} title="Hoy sin eventos" compact />
-              )}
-            </CardBody>
-          </Card>
-          )}
-
-          {showW('goals') && (
-          <Card className="animate-fade-up" style={{ animationDelay: '200ms' }}>
-            <CardHeader
-              title="Metas"
-              icon={Target}
-              action={<Button variant="ghost" size="icon-sm" icon={ChevronRight} onClick={() => navigate('metas')} />}
-            />
-            <CardBody className="space-y-4 pt-2">
-              {homeGoals.length ? (
-                homeGoals.map((g) => {
-                  const p = goalPct(g)
-                  return (
-                    <div key={g.id}>
-                      <div className="mb-1.5 flex items-center justify-between">
-                        <span className="text-[13px] font-medium text-ink">{g.title}</span>
-                        <span className="text-2xs font-semibold tabular text-muted">{p}%</span>
-                      </div>
-                      <ProgressBar value={p} size="sm" />
-                    </div>
-                  )
-                })
-              ) : (
-                <EmptyState icon={Target} title="Define tus metas" desc="Marca el norte por áreas." compact />
-              )}
-            </CardBody>
-          </Card>
-          )}
+                    <Switch checked={entrenoHoy} onChange={toggleEntreno} size="lg" />
+                  </CardBody>
+                </Card>
+              ),
+            },
+            { id: 'habits', el: <HabitsWidget /> },
+            {
+              id: 'agenda',
+              el: (
+                <Card className="animate-fade-up" style={{ animationDelay: '160ms' }}>
+                  <CardHeader
+                    title="Agenda de hoy"
+                    icon={CalendarClock}
+                    action={<Button variant="ghost" size="icon-sm" icon={ChevronRight} onClick={() => navigate('calendario')} />}
+                  />
+                  <CardBody className="space-y-1 pt-2">
+                    {agenda.length ? (
+                      agenda.map((e) => (
+                        <div key={e.id} className="flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-surface-2">
+                          <div className="w-12 shrink-0 text-sm font-semibold tabular text-ink">{fmtTime(e.time) || '—'}</div>
+                          <span className="h-8 w-0.5 rounded-full" style={{ background: `hsl(${e.color})` }} />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-ink">{e.title}</p>
+                            {e.sub && <p className="truncate text-2xs text-subtle">{e.sub}</p>}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <EmptyState icon={CalendarClock} title="Hoy sin eventos" compact />
+                    )}
+                  </CardBody>
+                </Card>
+              ),
+            },
+            {
+              id: 'goals',
+              el: (
+                <Card className="animate-fade-up" style={{ animationDelay: '200ms' }}>
+                  <CardHeader
+                    title="Metas"
+                    icon={Target}
+                    action={<Button variant="ghost" size="icon-sm" icon={ChevronRight} onClick={() => navigate('metas')} />}
+                  />
+                  <CardBody className={cx('pt-2', settings.goalStyle === 'anillo' ? 'flex flex-wrap gap-4' : 'space-y-4')}>
+                    {homeGoals.length ? (
+                      homeGoals.map((g) => {
+                        const p = goalPct(g)
+                        if (settings.goalStyle === 'anillo') {
+                          return (
+                            <div key={g.id} className="flex min-w-0 flex-1 flex-col items-center gap-1.5 text-center">
+                              <ProgressRing value={p} size={64} />
+                              <span className="w-full truncate text-2xs font-medium text-muted">{g.title}</span>
+                            </div>
+                          )
+                        }
+                        return (
+                          <div key={g.id}>
+                            <div className="mb-1.5 flex items-center justify-between">
+                              <span className="text-[13px] font-medium text-ink">{g.title}</span>
+                              <span className={cx('font-semibold tabular', settings.goalStyle === 'numero' ? 'text-lg text-ink' : 'text-2xs text-muted')}>{p}%</span>
+                            </div>
+                            {settings.goalStyle !== 'numero' && <ProgressBar value={p} size="sm" />}
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <EmptyState icon={Target} title="Define tus metas" desc="Marca el norte por áreas." compact />
+                    )}
+                  </CardBody>
+                </Card>
+              ),
+            },
+          ]
+            .filter((b) => showW(b.id))
+            .sort((a, b) => wOrder(a.id) - wOrder(b.id))
+            .map((b) => (
+              <div key={b.id}>{b.el}</div>
+            ))}
         </div>
       </div>
 

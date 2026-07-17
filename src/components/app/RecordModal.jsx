@@ -98,14 +98,24 @@ export function RecordModal({ open, onClose, title, subtitle, table, fields, ini
                 ))}
               </div>
             ) : (
-              <Input
-                type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
-                step={f.step}
-                placeholder={f.placeholder}
-                value={v[f.key] ?? ''}
-                onChange={(e) => set(f.key, e.target.value)}
-                autoFocus={f.autoFocus}
-              />
+              <>
+                <Input
+                  type={f.type === 'number' ? 'number' : f.type === 'date' ? 'date' : 'text'}
+                  step={f.step}
+                  placeholder={f.placeholder}
+                  value={v[f.key] ?? ''}
+                  onChange={(e) => set(f.key, e.target.value)}
+                  autoFocus={f.autoFocus}
+                  list={f.suggestions?.length ? `dl-${f.key}` : undefined}
+                />
+                {f.suggestions?.length ? (
+                  <datalist id={`dl-${f.key}`}>
+                    {f.suggestions.map((sg) => (
+                      <option key={sg} value={sg} />
+                    ))}
+                  </datalist>
+                ) : null}
+              </>
             )}
           </div>
         ))}

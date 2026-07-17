@@ -189,7 +189,14 @@ export default function Finanzas() {
   // helpers de modal
   const openNew = (type) => setModal(type)
   const openEdit = (type, row) => setModal({ type, row })
-  const cfg = modal && modal !== 'salary' ? MODALS[typeof modal === 'string' ? modal : modal.type] : null
+  let cfg = modal && modal !== 'salary' ? MODALS[typeof modal === 'string' ? modal : modal.type] : null
+  // Categorías del usuario (Ajustes → Módulos → Finanzas) como sugerencias
+  if (cfg) {
+    const catNames = (settings.financeCategories || []).map((c) => c.name).filter(Boolean)
+    if (catNames.length) {
+      cfg = { ...cfg, fields: cfg.fields.map((f) => (f.key === 'category' ? { ...f, suggestions: catNames } : f)) }
+    }
+  }
   const editingRow = typeof modal === 'object' && modal ? modal.row : null
 
   const rowCls = 'group flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-surface-2'
@@ -274,7 +281,15 @@ export default function Finanzas() {
                 {movements.slice(0, 20).map((m) => (
                   <TR key={m.id} className="cursor-pointer" onClick={() => openEdit('movement', m)}>
                     <TD><span className="font-medium">{m.concept}</span></TD>
-                    <TD>{m.category ? <Badge tone="neutral">{m.category}</Badge> : <span className="text-subtle">—</span>}</TD>
+                    <TD>{m.category ? (
+                      <Badge tone="neutral">
+                        {(() => {
+                          const cat = (settings.financeCategories || []).find((c) => c.name === m.category)
+                          return cat?.color ? <span className="h-1.5 w-1.5 rounded-full" style={{ background: `hsl(${cat.color})` }} /> : null
+                        })()}
+                        {m.category}
+                      </Badge>
+                    ) : <span className="text-subtle">—</span>}</TD>
                     <TD className="text-muted">{m.date}</TD>
                     <TD align="right"><span className={cx('font-semibold', m.amount > 0 ? 'text-success' : 'text-ink')}>{signedEur(m.amount)}</span></TD>
                   </TR>

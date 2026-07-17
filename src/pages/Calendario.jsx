@@ -4,9 +4,10 @@ import { useData } from '../context/DataContext'
 import { PageContainer, PageHeader } from '../components/layout/Page'
 import { Card, CardBody, Button, Dot, SectionTitle } from '../components/ui'
 import { RecordModal } from '../components/app/RecordModal'
-import { MESES, cx, capitalize, todayISO } from '../lib/utils'
+import { MESES, cx, capitalize, todayISO, weekStartsMonday, fmtTime } from '../lib/utils'
 
-const WEEK = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+const WEEK_MON = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+const WEEK_SUN = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 const pad = (n) => String(n).padStart(2, '0')
 
 const DURATIONS = [
@@ -26,8 +27,8 @@ function durationLabel(e) {
     case 'tarde': return 'Tarde'
     case 'dia': return 'Todo el día'
     case 'dias': return e.end_date ? `${daysBetween(String(e.date).slice(0, 10), String(e.end_date).slice(0, 10))} días` : 'Varios días'
-    case 'hora': return e.time || '1 hora'
-    default: return e.time || ''
+    case 'hora': return fmtTime(e.time) || '1 hora'
+    default: return fmtTime(e.time) || ''
   }
 }
 
@@ -38,7 +39,11 @@ export default function Calendario() {
   const [selected, setSelected] = useState(today.getDate())
   const [modal, setModal] = useState(null) // 'new' | { row }
 
-  const firstDow = (new Date(cursor.y, cursor.m, 1).getDay() + 6) % 7
+  const monday = weekStartsMonday()
+  const WEEK = monday ? WEEK_MON : WEEK_SUN
+  const firstDow = monday
+    ? (new Date(cursor.y, cursor.m, 1).getDay() + 6) % 7
+    : new Date(cursor.y, cursor.m, 1).getDay()
   const days = new Date(cursor.y, cursor.m + 1, 0).getDate()
   const isThisMonth = cursor.y === today.getFullYear() && cursor.m === today.getMonth()
   const cells = [...Array(firstDow).fill(null), ...Array.from({ length: days }, (_, i) => i + 1)]

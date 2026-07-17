@@ -7,6 +7,17 @@ export const PRIORITIES = {
   baja: { id: 'baja', label: 'Baja', hsl: '213 70% 60%' },
 }
 
+// Prioridad con nombre/color personalizados por el usuario.
+// Los datos guardan siempre alta/media/baja; solo cambia cómo se ven.
+export function prioMeta(settings, id) {
+  const base = PRIORITIES[id] || PRIORITIES.media
+  return {
+    ...base,
+    label: settings?.priorityNames?.[base.id]?.trim() || base.label,
+    hsl: settings?.priorityColors?.[base.id] || base.hsl,
+  }
+}
+
 // Paleta sugerida para proyectos / categorías nuevas
 export const COLOR_CHOICES = [
   '243 76% 64%', '262 72% 64%', '213 90% 58%', '188 78% 44%',
@@ -103,3 +114,16 @@ export const moduleIcon = (settings, id) => {
   if (custom && ICON_CHOICES.includes(custom)) return custom
   return MODULES.find((m) => m.id === id)?.icon || 'Home'
 }
+
+// Glifo del módulo: icono del set o un emoji del usuario
+// (guardado como "emoji:🚀" en moduleIcons).
+export const moduleEmoji = (settings, id) => {
+  const custom = settings?.moduleIcons?.[id]
+  return typeof custom === 'string' && custom.startsWith('emoji:') ? custom.slice(6) : null
+}
+
+// Emojis sugeridos para módulos e icono de la app
+export const EMOJI_CHOICES = [
+  '🏠', '💼', '💶', '🏋️', '🎯', '📓', '📅', '🚀', '📚', '🎨',
+  '🧠', '❤️', '✈️', '🛒', '☕', '🌱', '⚽', '🎸', '💡', '🔥',
+]

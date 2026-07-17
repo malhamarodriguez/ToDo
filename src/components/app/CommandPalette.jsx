@@ -6,7 +6,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
-import { MODULES, moduleName, moduleIcon } from '../../lib/data'
+import { MODULES, moduleName, moduleIcon, moduleEmoji } from '../../lib/data'
 import { ICONS } from '../layout/icons'
 import { Kbd } from '../ui'
 import { cx } from '../../lib/utils'
@@ -72,7 +72,10 @@ export function CommandPalette() {
     MODULES.filter((m) => visible.includes(m.id)).forEach((m) => {
       const label = moduleName(settings, m.id)
       if (match(label) || match(m.name)) {
-        const Icon = ICONS[moduleIcon(settings, m.id)]
+        const emoji = moduleEmoji(settings, m.id)
+        const Icon = emoji
+          ? () => <span aria-hidden style={{ fontSize: 15, lineHeight: 1 }}>{emoji}</span>
+          : ICONS[moduleIcon(settings, m.id)]
         out.push({ icon: Icon, label: `Ir a ${label}`, hint: 'Navegar', group: 'Navegación', run: () => navigate(m.id) })
       }
     })

@@ -7,12 +7,12 @@ export function cx(...args) {
     .join(' ')
 }
 
-// Dinero configurable: moneda del usuario + modo privacidad (oculta cantidades).
-let MONEY = { currency: 'EUR', privacy: false }
+// Dinero configurable: moneda + formato de números + modo privacidad.
+let MONEY = { currency: 'EUR', privacy: false, locale: 'es-ES' }
 const fmtCache = {}
 function moneyFmt(min, max) {
-  const k = `${MONEY.currency}-${min}-${max}`
-  return (fmtCache[k] ||= new Intl.NumberFormat('es-ES', {
+  const k = `${MONEY.locale}-${MONEY.currency}-${min}-${max}`
+  return (fmtCache[k] ||= new Intl.NumberFormat(MONEY.locale, {
     style: 'currency',
     currency: MONEY.currency,
     minimumFractionDigits: min,
@@ -21,6 +21,25 @@ function moneyFmt(min, max) {
 }
 export const configureMoney = (c) => {
   MONEY = { ...MONEY, ...c }
+}
+
+// Preferencias regionales: formato de hora y primer día de la semana.
+let LOCALE = { timeFormat: '24h', weekStart: 'lunes' }
+export const configureLocale = (c) => {
+  LOCALE = { ...LOCALE, ...c }
+}
+export const weekStartsMonday = () => LOCALE.weekStart !== 'domingo'
+
+// "13:30" → "1:30 PM" si el usuario prefiere 12 h.
+export function fmtTime(t) {
+  if (!t) return t
+  if (LOCALE.timeFormat !== '12h') return t
+  const m = String(t).match(/^(\d{1,2}):(\d{2})$/)
+  if (!m) return t
+  let h = Number(m[1])
+  const suffix = h >= 12 ? 'PM' : 'AM'
+  h = h % 12 || 12
+  return `${h}:${m[2]} ${suffix}`
 }
 const HIDDEN = '•••••'
 export const eur = (n) => (MONEY.privacy ? HIDDEN : moneyFmt(0, 0).format(n))
@@ -50,6 +69,21 @@ export function saludo(d = new Date()) {
   if (h < 13) return 'Buenos días'
   if (h < 20) return 'Buenas tardes'
   return 'Buenas noches'
+}
+
+// Saludo personalizable con variables: {nombre}, {fecha}, {hora}.
+// Con plantilla vacía se usa el saludo automático de siempre.
+export function renderGreeting(template, name, d = new Date()) {
+  const t = String(template || '').trim()
+  if (!t) return `${saludo(d)}${name ? `, ${name}` : ''}.`
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  return t
+    .replaceAll('{nombre}', name || '')
+    .replaceAll('{fecha}', capitalize(longDate(d)))
+    .replaceAll('{hora}', `${hh}:${mm}`)
+    .replace(/\s{2,}/g, ' ')
+    .trim()
 }
 
 export { DIAS, MESES }

@@ -2,13 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { Plus, X, Repeat } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
-import { PRIORITIES } from '../../lib/data'
+import { PRIORITIES, prioMeta } from '../../lib/data'
 import { todayISO, cx } from '../../lib/utils'
 import { parseTask, RECUR_OPTIONS, getRecur, withRecur } from '../../lib/nlp'
 import { Modal, Button, Label, Input, Select, Checkbox, Segmented } from '../ui'
 
 export function TaskModal() {
-  const { taskModal, setTaskModal, toast } = useApp()
+  const { taskModal, setTaskModal, toast, settings } = useApp()
   const { projects, add, update, remove } = useData()
   const editing = taskModal?.mode === 'edit' ? taskModal.task : null
 
@@ -119,7 +119,7 @@ export function TaskModal() {
             value={priority}
             onChange={setPriority}
             className="w-full [&>button]:flex-1"
-            options={Object.values(PRIORITIES).map((p) => ({ value: p.id, label: p.label }))}
+            options={Object.values(PRIORITIES).map((p) => ({ value: p.id, label: prioMeta(settings, p.id).label }))}
           />
         </div>
 

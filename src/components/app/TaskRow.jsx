@@ -1,7 +1,7 @@
 import { CalendarDays } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
-import { findProject, PRIORITIES } from '../../lib/data'
+import { findProject, prioMeta } from '../../lib/data'
 import { Checkbox, Badge, Chip, Dot } from '../ui'
 import { cx, taskOverdue, taskToday, taskDueLabel } from '../../lib/utils'
 
@@ -12,11 +12,11 @@ function subProgress(t) {
 }
 
 export function TaskRow({ task, compact }) {
-  const { openTask } = useApp()
+  const { openTask, settings } = useApp()
   const { toggleTask, projects } = useData()
   const done = task.status === 'done'
   const proj = findProject(projects, task.project_id)
-  const prio = PRIORITIES[task.priority] || PRIORITIES.media
+  const prio = prioMeta(settings, task.priority)
   const sp = subProgress(task)
   const overdue = taskOverdue(task)
   const hoy = taskToday(task)

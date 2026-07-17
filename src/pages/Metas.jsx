@@ -30,7 +30,7 @@ function valueLabel(g) {
 }
 
 export default function Metas() {
-  const { setUpgradeOpen } = useApp()
+  const { setUpgradeOpen, settings } = useApp()
   const { goals, remove, isPro } = useData()
   const [open, setOpen] = useState(false)
   const newGoal = () => {
@@ -91,13 +91,17 @@ export default function Metas() {
                               <Badge tone={complete ? 'success' : 'neutral'}>{TYPE_LABEL[g.type]}</Badge>
                             </div>
                             <div className="flex items-center gap-4">
-                              <ProgressRing value={p} size={56} stroke={6} color={color} />
+                              {settings.goalStyle !== 'numero' && (
+                                <ProgressRing value={p} size={56} stroke={6} color={color} />
+                              )}
                               <div className="min-w-0">
                                 <p className="font-display text-lg font-bold tabular text-ink">{p}%</p>
                                 <p className="truncate text-2xs text-subtle">{valueLabel(g)}</p>
                               </div>
                             </div>
-                            <ProgressBar value={p} size="sm" color={color} className="mt-4" />
+                            {(settings.goalStyle || 'barra') === 'barra' && (
+                              <ProgressBar value={p} size="sm" color={color} className="mt-4" />
+                            )}
                           </CardBody>
                         </Card>
                       )

@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Plus, GripVertical } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
-import { findProject, PRIORITIES } from '../../lib/data'
+import { findProject, prioMeta } from '../../lib/data'
 import { Badge, Chip, ProgressBar, Dot } from '../ui'
 import { cx, taskOverdue, taskToday, taskDueLabel } from '../../lib/utils'
 
@@ -23,9 +23,9 @@ function DropLine({ show }) {
   )
 }
 
-function KanbanCard({ task, projects, onDragStart, onDragEnd, onDragOverCard, onOpen, dragging }) {
+function KanbanCard({ task, projects, settings, onDragStart, onDragEnd, onDragOverCard, onOpen, dragging }) {
   const proj = findProject(projects, task.project_id)
-  const prio = PRIORITIES[task.priority] || PRIORITIES.media
+  const prio = prioMeta(settings, task.priority)
   const sp = task.subtasks?.length
     ? Math.round((task.subtasks.filter((s) => s.done).length / task.subtasks.length) * 100)
     : null
@@ -78,7 +78,7 @@ function KanbanCard({ task, projects, onDragStart, onDragEnd, onDragOverCard, on
 }
 
 export function KanbanBoard({ tasks }) {
-  const { setQuickAdd, openTask } = useApp()
+  const { setQuickAdd, openTask, settings } = useApp()
   const { moveTask, projects } = useData()
   const [dragId, setDragId] = useState(null)
   const [target, setTarget] = useState(null)
@@ -157,6 +157,7 @@ export function KanbanBoard({ tasks }) {
                   <KanbanCard
                     task={t}
                     projects={projects}
+                    settings={settings}
                     dragging={dragId === t.id}
                     onDragStart={onDragStart}
                     onDragEnd={onDragEnd}

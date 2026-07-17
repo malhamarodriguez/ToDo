@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Flame, Dumbbell, Trophy, Timer, Medal, Activity, TrendingDown, Trash2, Scale } from 'lucide-react'
 import { useData } from '../context/DataContext'
+import { useApp } from '../context/AppContext'
 import { streakFromDates, ACHIEVEMENTS } from '../lib/data'
 import { PageContainer, PageHeader } from '../components/layout/Page'
 import { TrendArea } from '../components/charts'
@@ -47,6 +48,8 @@ const isoOf = (d) => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.ge
 export default function Deporte() {
   const c = useThemeColors()
   const { workouts, metrics, remove } = useData()
+  const { settings } = useApp()
+  const wUnit = settings.units?.weight || 'kg'
   const [modal, setModal] = useState(null)
 
   const dateSet = new Set(workouts.map((w) => String(w.date).slice(0, 10)))
@@ -67,7 +70,7 @@ export default function Deporte() {
     { label: 'Racha actual', value: streak, unit: 'días', icon: Flame, tone: 'text-warning' },
     { label: 'Este mes', value: monthCount, unit: 'entrenos', icon: Dumbbell },
     { label: 'Total', value: workouts.length, unit: 'sesiones', icon: Activity },
-    { label: 'Peso actual', value: lastWeight ?? '—', unit: lastWeight ? 'kg' : '', icon: TrendingDown, tone: 'text-success' },
+    { label: 'Peso actual', value: lastWeight ?? '—', unit: lastWeight ? wUnit : '', icon: TrendingDown, tone: 'text-success' },
   ]
 
   return (
@@ -124,7 +127,7 @@ export default function Deporte() {
                     {w.exercises.map((e, i) => (
                       <div key={i} className="flex items-center justify-between text-[13px]">
                         <span className="text-muted">{e.name}</span>
-                        <span className="tabular text-ink">{e.sets}{e.kg ? ` · ${e.kg} kg` : ''}</span>
+                        <span className="tabular text-ink">{e.sets}{e.kg ? ` · ${e.kg} ${wUnit}` : ''}</span>
                       </div>
                     ))}
                   </div>
@@ -139,7 +142,7 @@ export default function Deporte() {
             <CardHeader title="Composición corporal" subtitle="Peso registrado" icon={TrendingDown} action={<Button variant="ghost" size="icon-sm" icon={Plus} onClick={() => setModal('metric')} />} />
             <CardBody className="pt-3">
               {sortedMetrics.length > 1 ? (
-                <TrendArea data={sortedMetrics.map((m) => ({ m: relDay(m.date), peso: m.weight }))} series={[{ key: 'peso', name: 'Peso (kg)', color: c.accent, fill: 0.18 }]} fmt={(v) => `${v}`} height={180} />
+                <TrendArea data={sortedMetrics.map((m) => ({ m: relDay(m.date), peso: m.weight }))} series={[{ key: 'peso', name: `Peso (${wUnit})`, color: c.accent, fill: 0.18 }]} fmt={(v) => `${v}`} height={180} />
               ) : <EmptyState icon={Scale} title="Sin métricas" desc="Registra tu peso para ver la evolución." compact />}
             </CardBody>
           </Card>
@@ -179,7 +182,7 @@ export default function Deporte() {
         <RecordModal open onClose={() => setModal(null)} title="Registrar peso" table="metrics"
           fields={[
             { key: 'date', label: 'Fecha', type: 'date', default: todayISO() },
-            { key: 'weight', label: 'Peso (kg)', type: 'number', step: '0.1', autoFocus: true },
+            { key: 'weight', label: `Peso (${wUnit})`, type: 'number', step: '0.1', autoFocus: true },
             { key: 'fat', label: '% graso', type: 'number', step: '0.1' },
           ]} />
       )}
