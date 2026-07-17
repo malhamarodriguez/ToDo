@@ -25,56 +25,43 @@ npm run build:single  # genera dist-single/index.html — un único archivo
 
 ---
 
-## Sistema de diseño
+## Sistema de diseño y personalización
 
-Todo el sistema vive en tokens (variables CSS) en `src/index.css` y se expone a
-Tailwind en `tailwind.config.js`. Dos ejes lo gobiernan:
+Todo el sistema vive en tokens (variables CSS) definidos en `src/index.css`,
+resueltos por el **motor de temas** (`src/lib/theme.js`) y expuestos a Tailwind
+en `tailwind.config.js`. El look por defecto es **Eléctrico** (Electric Kinetic:
+obsidiana + cian con glow, Geist + JetBrains Mono).
 
-- **Modo:** `dark` · `light` · `system` (`data-mode`)
-- **Dirección:** `eclipse` · `calido` (`data-direction`)
-- **Acento:** configurable en tiempo real (`--accent`), con 10 presets + tono libre.
+### Presets
 
-### Direcciones
+Un preset es un tema completo — superficies, texto, acento, rampa de datos
+(`--viz-1…6`), fuente, radios, sombras y fondo — con variante clara y oscura:
 
-| | **Eclipse** (por defecto) | **Cálido** |
-|---|---|---|
-| Personalidad | Frío, preciso, técnico | Editorial, sereno, humano |
-| Superficies | Slate azulado (frío) | Graphite/papel templado (cálido) |
-| Acento def. | Índigo `243 76% 64%` | Ámbar `36 92% 55%` |
-| Display | Space Grotesk (geométrica) | Fraunces (serif) |
-| Radio base | 14px | 18px |
-| Sombra | Sutil + halo de acento | Difusa, sin halo |
+`Eléctrico` (serie) · `Ejecutivo` · `Noche` · `Papel` · `Bosque` · `Terminal` ·
+`Alto contraste` · `Amanecer` · `Tinta` · `Neón`
 
-> Referencia: _Linear / Vercel_ para Eclipse, _Notion_ para Cálido — con identidad propia.
+Sobre el preset, el usuario puede afinar TODO desde Ajustes: acento (global y
+por módulo), colores exactos con aviso de contraste WCAG AA, 9 tipografías
+(carga bajo demanda), tamaño S/M/L/XL, peso de titulares, radio 0–20px, grosor
+de bordes, estilo de sombras, densidad (escala `--space` en todo el spacing),
+animaciones, 5 fondos, nombre e icono de la instancia, saludo con variables,
+módulos con drag & drop + emoji, widgets del Inicio reordenables, formatos
+(números, hora 12/24, semana, divisa), prioridades renombrables, unidades,
+estilo de progreso de metas y lectura del diario. "Sorpréndeme" genera temas
+aleatorios con armonía real, y los temas se exportan/importan como JSON con
+validación estricta.
 
-### Paleta (tokens semánticos)
+Los ajustes se guardan en `summa:settings` (con `schemaVersion` y migraciones)
+y sincronizan con la nube; la resolución final del tema se cachea en
+`summa:boot-theme` para aplicarse antes del primer pintado (sin FOUC).
 
-Neutros y superficies por capas (de fondo a elevado): `bg → surface → surface-2 →
-elevated`, con `line` / `line-strong` para bordes y `ink` / `muted` / `subtle` para
-texto. Cada combinación dirección × modo redefine estos valores en HSL.
+### Tokens
 
-```
-Eclipse · oscuro     bg 222 24% 6%   surface 222 21% 9%   ink 210 30% 98%
-Eclipse · claro      bg 220 32% 97%  surface 0 0% 100%    ink 222 38% 11%
-Cálido · oscuro      bg 28 14% 6%    surface 30 11% 9%    ink 40 30% 97%
-Cálido · claro       bg 40 38% 96%   surface 42 52% 99%   ink 28 28% 13%
-```
-
-Semánticos compartidos: `success` `warning` `danger` `info` + `accent` configurable.
-
-### Tipografía
-
-- **Sans / UI:** Hanken Grotesk (variable) — legible, con carácter.
-- **Display / titulares:** Space Grotesk (Eclipse) o Fraunces (Cálido).
-- Numerales tabulares (`.tabular`) para datos y finanzas.
-
-### Escalas
-
-- **Espaciado:** base 4px (Tailwind) con layouts generosos (`gutter` fluido).
-- **Radios:** derivados de `--radius` → `sm … 3xl`.
-- **Sombras:** `xs · sm · md · lg · xl · glow` (el `glow` tiñe con el acento).
-- **Movimiento:** transiciones 150–300ms (`ease-smooth`, `ease-spring`) y animaciones
-  de entrada (`fade-up`, `scale-in`, `toast-in`).
+Superficies por capas: `bg → surface → surface-2 → elevated`, bordes `line` /
+`line-strong` (grosor `--border-w`), texto `ink` / `muted` / `subtle`,
+semánticos `success` `warning` `danger` `info`, acento `--accent`/`--accent-fg`
+y rampa categórica `--viz-1…6` para datos. Sombras `xs…xl` + `glow`; radios
+derivados de `--radius`; espaciado Tailwind en `calc()` sobre `--space`.
 
 ---
 
