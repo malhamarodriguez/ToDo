@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" data-mode="dark" data-direction="eclipse">
+<html lang="es" data-mode="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -21,16 +21,27 @@
       content="Summa: la suma de tu vida en un solo lugar. Tareas, finanzas, deporte y objetivos. Todo cuenta."
     />
     <script>
-      // Apply saved theme before paint to avoid a flash.
+      // Reponer el tema resuelto ANTES del primer pintado (sin FOUC).
+      // La app cachea en summa:boot-theme el mapa completo de variables;
+      // aquí solo se reproduce. Fallback: ajustes v1 (o de nucleo:).
       (function () {
         try {
+          const root = document.documentElement
+          const boot = JSON.parse(localStorage.getItem('summa:boot-theme') || 'null')
+          if (boot && boot.vars) {
+            for (const k in boot.attrs) root.setAttribute(k, boot.attrs[k])
+            for (const k in boot.vars) root.style.setProperty(k, boot.vars[k])
+            if (boot.themeColor) {
+              const meta = document.querySelector('meta[name="theme-color"]')
+              if (meta) meta.setAttribute('content', boot.themeColor)
+            }
+            return
+          }
           // summa: con fallback a nucleo: (migración de marca; la copia real corre en la app)
           const s = JSON.parse(localStorage.getItem('summa:settings') || localStorage.getItem('nucleo:settings') || '{}')
-          const root = document.documentElement
           if (s.mode) root.setAttribute('data-mode', s.mode === 'system'
             ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
-            : s.mode)
-          if (s.direction) root.setAttribute('data-direction', s.direction)
+            : (s.mode === 'light' ? 'light' : 'dark'))
           if (s.accent) {
             root.style.setProperty('--accent', s.accent.hsl)
             root.style.setProperty('--accent-fg', s.accent.fg)

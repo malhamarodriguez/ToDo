@@ -308,7 +308,7 @@ export default function Finanzas() {
                     <span className="flex items-center gap-1.5 font-medium text-ink">{b.category}{over && <AlertTriangle size={13} className="text-danger" />}</span>
                     <span className={cx('tabular font-semibold', over ? 'text-danger' : 'text-muted')}>{eur(b.spent)} / {eur(b.limit_amount)}</span>
                   </div>
-                  <ProgressBar value={Math.min(p, 100)} size="sm" color={over ? '358 70% 60%' : b.color} />
+                  <ProgressBar value={Math.min(p, 100)} size="sm" color={over ? 'var(--danger)' : b.color} />
                 </button>
               )
             }) : <EmptyState icon={Wallet} title="Sin presupuestos" desc="Define límites por categoría." compact />}
@@ -323,7 +323,7 @@ export default function Finanzas() {
           <CardBody className="pt-1">
             {holdings.length ? (
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <DonutChart data={[{ name: 'Activos', value: activos, color: '243 76% 64%' }, { name: 'Pasivos', value: pasivos, color: '358 70% 60%' }]} fmt={eur} height={150} inner={46} outer={68}>
+                <DonutChart data={[{ name: 'Activos', value: activos, color: 'var(--viz-1)' }, { name: 'Pasivos', value: pasivos, color: 'var(--danger)' }]} fmt={eur} height={150} inner={46} outer={68}>
                   <div>
                     <p className="text-2xs uppercase tracking-wide text-subtle">Neto</p>
                     <p className="font-display text-lg font-bold tabular text-ink">{eur(neto)}</p>
@@ -332,7 +332,7 @@ export default function Finanzas() {
                 <div className="flex-1 space-y-1">
                   {holdings.map((h) => (
                     <button key={h.id} onClick={() => openEdit('holding', h)} className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] transition-colors hover:bg-surface-2">
-                      <Dot color={h.kind === 'liability' ? '358 70% 60%' : '243 76% 64%'} size={7} />
+                      <Dot color={h.kind === 'liability' ? 'var(--danger)' : 'var(--viz-1)'} size={7} />
                       <span className="min-w-0 flex-1 truncate text-ink">{h.name}</span>
                       <span className={cx('tabular font-semibold', h.kind === 'liability' ? 'text-danger' : 'text-ink')}>{h.kind === 'liability' ? '−' : ''}{eur(Number(h.value))}</span>
                     </button>

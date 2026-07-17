@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { useApp } from '../../context/AppContext'
 
 // Lee las variables CSS del tema y las devuelve como colores hsl() resueltos,
-// re-evaluando cuando cambia el modo / dirección / acento.
+// re-evaluando cuando cambia el preset / modo / acento.
 export function useThemeColors() {
-  const { settings, resolvedMode } = useApp()
+  const { settings, resolvedMode, route } = useApp()
   const [colors, setColors] = useState(read)
 
   function read() {
@@ -15,6 +15,7 @@ export function useThemeColors() {
     return {
       accent: v('--accent'),
       violet: v('--viz-2'),
+      viz: [v('--viz-1'), v('--viz-2'), v('--viz-3'), v('--viz-4'), v('--viz-5'), v('--viz-6')],
       accentSoft: va('--accent', 0.16),
       grid: va('--border', 0.7),
       axis: v('--text-subtle'),
@@ -27,6 +28,7 @@ export function useThemeColors() {
       danger: v('--danger'),
       warning: v('--warning'),
       info: v('--info'),
+      fontMono: s.getPropertyValue('--font-mono').trim() || "'JetBrains Mono Variable', monospace",
     }
   }
 
@@ -34,7 +36,7 @@ export function useThemeColors() {
     // Esperar a que se aplique la transición de tema.
     const id = setTimeout(() => setColors(read()), 60)
     return () => clearTimeout(id)
-  }, [settings.mode, settings.direction, settings.accent, resolvedMode])
+  }, [settings, resolvedMode, route])
 
   return colors
 }

@@ -18,7 +18,7 @@ import { useThemeColors, ChartTooltip } from './useThemeColors'
 import { uid } from '../../lib/utils'
 
 const axisProps = (c) => ({
-  tick: { fill: c.axis, fontSize: 10.5, fontWeight: 500, fontFamily: "'JetBrains Mono Variable', monospace" },
+  tick: { fill: c.axis, fontSize: 10.5, fontWeight: 500, fontFamily: c.fontMono },
   tickLine: false,
   axisLine: false,
 })

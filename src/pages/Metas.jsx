@@ -10,10 +10,10 @@ import { clamp, cx } from '../lib/utils'
 import { canCreate, FREE_LIMITS } from '../lib/plan'
 
 const AREA_META = {
-  Negocio: { icon: Briefcase, color: '243 76% 64%' },
-  Finanzas: { icon: Wallet, color: '158 64% 44%' },
-  Salud: { icon: HeartPulse, color: '342 80% 62%' },
-  Personal: { icon: Sparkles, color: '36 92% 55%' },
+  Negocio: { icon: Briefcase, color: 'var(--viz-1)' },
+  Finanzas: { icon: Wallet, color: 'var(--viz-3)' },
+  Salud: { icon: HeartPulse, color: 'var(--viz-5)' },
+  Personal: { icon: Sparkles, color: 'var(--viz-4)' },
 }
 const TYPE_LABEL = { percent: 'Porcentaje', numeric: 'Numérico', project: 'Proyecto' }
 

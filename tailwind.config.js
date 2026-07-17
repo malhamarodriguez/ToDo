@@ -1,8 +1,16 @@
+// Escala de espaciado en calc() sobre --space: la "densidad" de Ajustes
+// (compacta/normal/cómoda) escala paddings, gaps y tamaños en toda la app.
+const SPACING = { px: '1px', 0: '0px' }
+for (const k of [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 72, 80, 96]) {
+  SPACING[k] = `calc(${k * 0.25}rem * var(--space, 1))`
+}
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ['class', '[data-mode="dark"]'],
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
+    spacing: SPACING,
     extend: {
       colors: {
         // Surfaces & neutrals — all driven by CSS variables so the
@@ -58,9 +66,10 @@ export default {
         'inner-line': 'inset 0 0 0 1px hsl(var(--border) / 0.7)',
       },
       spacing: {
-        18: '4.5rem',
-        22: '5.5rem',
         gutter: 'clamp(1rem, 1rem + 1vw, 2rem)',
+      },
+      borderWidth: {
+        DEFAULT: 'var(--border-w, 1px)',
       },
       maxWidth: {
         content: '1440px',

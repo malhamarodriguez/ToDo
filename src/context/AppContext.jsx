@@ -1,20 +1,20 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
-import { ACCENTS, applyTheme, resolveMode } from '../lib/theme'
+import { applyTheme, resolveMode } from '../lib/theme'
 import { MODULES, HOME_WIDGETS, QUICK_ACTIONS, moduleName } from '../lib/data'
 import { uid, configureMoney } from '../lib/utils'
 
-const FONT_SCALES = { sm: '14.5px', md: '16px', lg: '17.5px' }
+const FONT_SCALES = { sm: '14.5px', md: '16px', lg: '17.5px', xl: '19px' }
 
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
 const DEFAULT_SETTINGS = {
+  schemaVersion: 2,
   name: '',
   role: '',
   motto: '',
-  mode: 'dark',
-  direction: 'eclipse',
-  accent: ACCENTS[0],
+  mode: 'dark', // dark | light | system | franja
+  accent: null, // null = el del preset; {id,hsl,fg} = acento rápido
   salary: 0,
   hideOnboarding: false,
   modules: MODULES.map((m) => ({ id: m.id, hidden: false })),
@@ -25,17 +25,45 @@ const DEFAULT_SETTINGS = {
   habits: [], // [{ id, name, color }]
   habitLog: {}, // { 'YYYY-MM-DD': [habitId] }
   homeWidgets: HOME_WIDGETS.map((w) => ({ id: w.id, hidden: false })),
-  fontScale: 'md', // sm | md | lg
+  fontScale: 'md', // sm | md | lg | xl
   currency: 'EUR',
   privacy: false, // ocultar cantidades
   startModule: 'inicio',
+  // Tema (v2): preset + ajustes finos encima
+  preset: 'electrico',
+  themeOverrides: {}, // { dark: {bg,...}, light: {...} } — editor de tema
+  font: null, // null = la del preset
+  radius: null, // px; null = el del preset
+  shadow: null, // glow | soft | flat; null = el del preset
+  borderW: null, // fino | medio | grueso
+  headingWeight: null, // ligero | normal | fuerte
+  density: 'normal', // compacta | normal | comoda
+  anim: 'completas', // completas | reducidas | ninguna
+  bgFx: null, // blooms | solido | degradado | malla | puntos
+  moduleAccents: {}, // { finanzas: {hsl,fg}, ... }
+  appName: '', // nombre de la instancia ('' = Summa)
+  greeting: '', // saludo con {nombre} {fecha} {hora}
+}
+
+// Migración de esquema: v1 (pre-presets) → v2. Nunca borra nada
+// que no entienda; los datos del usuario no se tocan.
+export function migrateSettings(raw) {
+  if (!raw || typeof raw !== 'object') return {}
+  const s = { ...raw }
+  if ((s.schemaVersion || 1) < 2) {
+    delete s.direction // el sistema de "direcciones" lo sustituyen los presets
+    // El acento antiguo por defecto (cian o índigo migrado) pasa a
+    // "seguir al preset"; los personalizados se conservan tal cual.
+    if (s.accent && (s.accent.id === 'electrico' || s.accent.id === 'indigo')) s.accent = null
+    s.preset = 'electrico'
+    s.schemaVersion = 2
+  }
+  return s
 }
 
 function loadSettings() {
   try {
-    const raw = JSON.parse(localStorage.getItem('summa:settings') || '{}')
-    // Electric Kinetic: el acento por defecto pasa de índigo a cian.
-    if (raw.accent?.id === 'indigo') raw.accent = ACCENTS[0]
+    const raw = migrateSettings(JSON.parse(localStorage.getItem('summa:settings') || '{}'))
     return { ...DEFAULT_SETTINGS, ...raw }
   } catch {
     return DEFAULT_SETTINGS
@@ -64,7 +92,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     localStorage.setItem('summa:settings', JSON.stringify(settings))
     document.documentElement.classList.add('theming')
-    applyTheme(settings)
+    applyTheme(settings, route)
     // Preferencias personales: tamaño de texto, moneda y privacidad
     document.documentElement.style.fontSize = FONT_SCALES[settings.fontScale] || FONT_SCALES.md
     configureMoney({ currency: settings.currency || 'EUR', privacy: Boolean(settings.privacy) })
@@ -73,7 +101,7 @@ export function AppProvider({ children }) {
       () => document.documentElement.classList.remove('theming'),
       400
     )
-  }, [settings])
+  }, [settings, route])
 
   // Pantalla inicial configurable (solo si se abre sin ruta)
   const startApplied = useRef(false)
@@ -91,16 +119,23 @@ export function AppProvider({ children }) {
     const FIXED = { inicio: 'Panel', ajustes: 'Ajustes', informe: 'Informe', admin: 'Gestión', acceso: 'Acceso', privacidad: 'Privacidad', terminos: 'Términos' }
     const isModule = MODULES.some((m) => m.id === route)
     const label = FIXED[route] || (isModule ? moduleName(settings, route) : '')
-    document.title = label ? `Summa — ${label}` : 'Summa — Todo cuenta.'
-  }, [route, settings.moduleNames]) // eslint-disable-line react-hooks/exhaustive-deps
+    const app = settings.appName || 'Summa'
+    document.title = label ? `${app} — ${label}` : `${app} — Todo cuenta.`
+  }, [route, settings.moduleNames, settings.appName]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Modos reactivos: "system" sigue al SO; "franja" cambia por hora.
   useEffect(() => {
-    if (settings.mode !== 'system') return
-    const mq = window.matchMedia('(prefers-color-scheme: light)')
-    const fn = () => applyTheme(settings)
-    mq.addEventListener('change', fn)
-    return () => mq.removeEventListener('change', fn)
-  }, [settings])
+    if (settings.mode === 'system') {
+      const mq = window.matchMedia('(prefers-color-scheme: light)')
+      const fn = () => applyTheme(settings, route)
+      mq.addEventListener('change', fn)
+      return () => mq.removeEventListener('change', fn)
+    }
+    if (settings.mode === 'franja') {
+      const id = setInterval(() => applyTheme(settings, route), 60000)
+      return () => clearInterval(id)
+    }
+  }, [settings, route])
 
   useEffect(() => {
     const onHash = () => setRoute(location.hash.replace('#/', '') || 'inicio')
@@ -118,7 +153,9 @@ export function AppProvider({ children }) {
 
   const update = useCallback((patch) => setSettings((s) => ({ ...s, ...patch })), [])
   const hydrateSettings = useCallback(
-    (incoming) => setSettings((s) => ({ ...DEFAULT_SETTINGS, ...s, ...incoming })),
+    // Los ajustes de la nube pueden venir de un dispositivo sin actualizar:
+    // se migran igual que los locales.
+    (incoming) => setSettings((s) => ({ ...DEFAULT_SETTINGS, ...s, ...migrateSettings(incoming) })),
     []
   )
 

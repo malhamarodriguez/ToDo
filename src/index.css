@@ -18,13 +18,21 @@
   --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 
   --radius: 6px;
+  --border-w: 1px;
+  --space: 1;
+  --heading-weight: 700;
 
   /* Acento por defecto: cian eléctrico (texto oscuro encima). */
   --accent: 186 100% 50%;
   --accent-fg: 187 100% 7%;
 
-  /* Segunda serie de datos (violeta neón) */
+  /* Rampa categórica de datos (viz-1 = primaria, viz-2 = violeta neón) */
+  --viz-1: 186 100% 50%;
   --viz-2: 258 100% 66%;
+  --viz-3: 158 64% 48%;
+  --viz-4: 36 92% 55%;
+  --viz-5: 342 80% 62%;
+  --viz-6: 213 90% 58%;
 
   /* Semánticos (válidos en ambos modos) */
   --success: 152 56% 46%;
@@ -102,6 +110,7 @@
   h1, h2, h3, h4 {
     @apply font-display;
     letter-spacing: -0.02em;
+    font-weight: var(--heading-weight, 700);
   }
   /* Numerales tabulares para datos/finanzas */
   .tabular {
@@ -138,12 +147,37 @@
 
 /* ---------- Utilidades de composición ---------- */
 @layer components {
-  /* Fondo de la app con un velo radial muy sutil del acento */
+  /* Fondo de la app: variantes elegibles en Ajustes (data-bgfx).
+     Por defecto, halos radiales muy sutiles del acento. */
   .app-canvas {
     background-color: hsl(var(--bg));
     background-image:
       radial-gradient(64rem 64rem at 110% -12%, hsl(var(--accent) / 0.09), transparent 55%),
       radial-gradient(50rem 50rem at -12% 108%, hsl(var(--viz-2) / 0.06), transparent 52%);
+    background-attachment: fixed;
+  }
+  [data-bgfx='solido'] .app-canvas {
+    background-image: none;
+  }
+  [data-bgfx='degradado'] .app-canvas {
+    background-image: linear-gradient(
+      160deg,
+      hsl(var(--accent) / 0.08) 0%,
+      transparent 34%,
+      transparent 66%,
+      hsl(var(--viz-2) / 0.07) 100%
+    );
+  }
+  [data-bgfx='malla'] .app-canvas {
+    background-image:
+      linear-gradient(hsl(var(--text) / 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--text) / 0.035) 1px, transparent 1px);
+    background-size: 32px 32px;
+    background-attachment: fixed;
+  }
+  [data-bgfx='puntos'] .app-canvas {
+    background-image: radial-gradient(hsl(var(--text) / 0.07) 1px, transparent 1.5px);
+    background-size: 22px 22px;
     background-attachment: fixed;
   }
 
@@ -197,6 +231,22 @@
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Preferencia de animaciones elegida en Ajustes (data-anim) */
+[data-anim='ninguna'] *,
+[data-anim='ninguna'] *::before,
+[data-anim='ninguna'] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+[data-anim='reducidas'] *,
+[data-anim='reducidas'] *::before,
+[data-anim='reducidas'] *::after {
+  animation-duration: 0.12s !important;
+  transition-duration: 0.1s !important;
 }
 
 /* Transición suave global al cambiar de tema */
