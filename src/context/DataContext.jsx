@@ -271,8 +271,60 @@ export function DataProvider({ children, demo = false }) {
 
   const refetch = useCallback(() => !demo && user && fetchAll(user.id, { silent: true }), [user, fetchAll, demo])
 
+  // Restaurar una copia de seguridad sobre la nube (o la demo).
+  // mode: 'fusionar' añade solo las filas cuyo id no exista;
+  //       'reemplazar' borra lo actual y carga la copia tal cual.
+  // Devuelve el nº de filas procesadas; lanza Error si algo falla.
+  const restoreData = useCallback(
+    async (tables, mode) => {
+      let total = 0
+      if (demo) {
+        setBoth((d) => {
+          const next = { ...d }
+          for (const t of TABLES) {
+            const rows = tables[t] || []
+            if (!rows.length && mode !== 'reemplazar') continue
+            if (mode === 'reemplazar') next[t] = rows
+            else {
+              const have = new Set(next[t].map((r) => r.id))
+              next[t] = [...next[t], ...rows.filter((r) => !have.has(r.id))]
+            }
+            total += rows.length
+          }
+          return next
+        })
+        return total
+      }
+
+      const CHUNK = 400
+      if (mode === 'reemplazar') {
+        // Borrado en orden inverso (hijos antes que padres)
+        for (const t of [...TABLES].reverse()) {
+          const { error } = await supabase.from(t).delete().eq('user_id', user.id)
+          if (error) throw new Error(`No se pudo vaciar ${t}: ${error.message}`)
+        }
+      }
+      for (const t of TABLES) {
+        const rows = (tables[t] || []).map(({ user_id, ...r }) => ({ ...r, user_id: user.id }))
+        for (let i = 0; i < rows.length; i += CHUNK) {
+          const slice = rows.slice(i, i + CHUNK)
+          const q =
+            mode === 'fusionar'
+              ? supabase.from(t).upsert(slice, { onConflict: 'id', ignoreDuplicates: true })
+              : supabase.from(t).insert(slice)
+          const { error } = await q
+          if (error) throw new Error(`Error restaurando ${t}: ${error.message}`)
+          total += slice.length
+        }
+      }
+      await fetchAll(user.id, { silent: true })
+      return total
+    },
+    [demo, user, setBoth, fetchAll]
+  )
+
   const isPro = demo || profile?.plan === 'pro'
 
-  const value = { ...data, loading, demo, profile, isPro, isAdmin, adminOverview, add, update, remove, toggleTask, moveTask, refetch }
+  const value = { ...data, loading, demo, profile, isPro, isAdmin, adminOverview, add, update, remove, toggleTask, moveTask, refetch, restoreData }
   return <DataCtx.Provider value={value}>{children}</DataCtx.Provider>
 }

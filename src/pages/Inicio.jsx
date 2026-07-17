@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import {
   Plus, Receipt, PenLine, Dumbbell, ArrowRight, Check, ChevronRight,
-  Wallet, TrendingUp, CalendarClock, Target, Play, Timer, X, Sparkles, Banknote, Flame,
+  Wallet, TrendingUp, CalendarClock, Target, Play, Timer, X, Sparkles, Banknote, Flame, Download,
 } from 'lucide-react'
 import { toggleHabitLog, habitStreak, habitWeek, habitDoneOn, HABIT_COLORS } from '../lib/habits'
+import { backupOverdue } from '../lib/backup'
 import { BETA_FREE } from '../lib/plan'
 import { uid, todayISO as tISO } from '../lib/utils'
 import { useApp } from '../context/AppContext'
@@ -180,6 +181,37 @@ function HabitsWidget() {
   )
 }
 
+// Aviso discreto de copia de seguridad (>30 días; posponer = 14 días)
+function BackupNag() {
+  const { settings, navigate } = useApp()
+  const { demo, tasks, movements } = useData()
+  const [snoozed, setSnoozed] = useState(() => localStorage.getItem('summa:backup-nag'))
+  const hasData = tasks.length > 0 || movements.length > 0
+  if (demo || !hasData || !backupOverdue(settings.lastBackupAt, snoozed)) return null
+  return (
+    <div className="mb-4 flex items-center gap-2 rounded-lg border border-line bg-surface-2/50 px-3 py-2 text-2xs text-muted animate-fade-in">
+      <Download size={12} className="shrink-0 text-subtle" />
+      <span className="min-w-0 truncate">
+        {settings.lastBackupAt ? 'Hace más de 30 días de tu última copia de seguridad.' : 'Aún no tienes ninguna copia de seguridad.'}
+      </span>
+      <button onClick={() => navigate('ajustes')} className="shrink-0 font-semibold text-accent hover:underline">
+        Exportar
+      </button>
+      <button
+        onClick={() => {
+          const now = new Date().toISOString()
+          localStorage.setItem('summa:backup-nag', now)
+          setSnoozed(now)
+        }}
+        aria-label="Posponer aviso"
+        className="ml-auto shrink-0 text-subtle hover:text-ink"
+      >
+        <X size={12} />
+      </button>
+    </div>
+  )
+}
+
 export default function Inicio() {
   const { settings, navigate, setQuickAdd, toast, focus, startFocus, setReviewOpen } = useApp()
   const { tasks, events, goals, movements, holdings, workouts, add, remove } = useData()
@@ -255,6 +287,8 @@ export default function Inicio() {
           <p className="mt-2 text-[13px] italic text-subtle">“{settings.motto}”</p>
         )}
       </div>
+
+      <BackupNag />
 
       {showW('onboarding') && <Onboarding />}
 

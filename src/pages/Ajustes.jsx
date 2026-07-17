@@ -6,7 +6,7 @@ import {
   AlertTriangle, X, Plus, Wallet, ListChecks, Dumbbell, Target, NotebookPen,
   PanelLeft, Coins, Wand2,
 } from 'lucide-react'
-import { useApp } from '../context/AppContext'
+import { useApp, migrateSettings } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import { useData, TABLES } from '../context/DataContext'
 import {
@@ -24,6 +24,8 @@ import { ModuleGlyph } from '../components/layout/ModuleGlyph'
 import { PageContainer, PageHeader } from '../components/layout/Page'
 import { Button, Input, Label, Segmented, Switch, Select } from '../components/ui'
 import { Panel, SectionHead, DndList, Grip, ConfirmButton } from '../components/ajustes/common'
+import { ImportBackupModal } from '../components/ajustes/ImportBackup'
+import { buildBackup, validateBackup, agoLabel } from '../lib/backup'
 import { cx, renderGreeting } from '../lib/utils'
 
 // Claves de cada sección (para "modificado" + restablecer)
@@ -232,11 +234,15 @@ export default function Ajustes() {
   const { settings, update, toast } = useApp()
   const { user, signOut } = useAuth()
   const data = useData()
+  const { restoreData } = data
   const fileRef = useRef()
   const themeFileRef = useRef()
   const [q, setQ] = useState('')
   const [installEvt, setInstallEvt] = useState(null)
   const [pickerFor, setPickerFor] = useState(null)
+  const [pendingBackup, setPendingBackup] = useState(null)
+  const [restoring, setRestoring] = useState(false)
+  const [moreBackup, setMoreBackup] = useState(false)
   const [catDraft, setCatDraft] = useState('')
 
   const mode = resolveMode(settings.mode)
@@ -276,8 +282,7 @@ export default function Ajustes() {
 
   // Copia completa: ajustes + todos tus datos (tareas, finanzas, metas…)
   const exportData = () => {
-    const payload = { exportedAt: new Date().toISOString(), settings }
-    TABLES.forEach((t) => (payload[t] = data[t] || []))
+    const payload = buildBackup(settings, data)
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -285,22 +290,42 @@ export default function Ajustes() {
     a.download = `summa-copia-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
-    toast({ type: 'success', title: 'Copia completa exportada', desc: 'Incluye todos tus datos' })
+    update({ lastBackupAt: new Date().toISOString() })
+    toast({ type: 'success', title: 'Copia completa exportada', desc: 'Ajustes + todos tus datos' })
   }
+  // Import: valida, enseña la vista previa y espera confirmación.
   const importData = (e) => {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
     const r = new FileReader()
     r.onload = () => {
       try {
-        const parsed = JSON.parse(r.result)
-        update(parsed.settings || parsed)
-        toast({ type: 'success', title: 'Ajustes restaurados', desc: 'Los datos viven en tu nube' })
-      } catch {
-        toast({ type: 'danger', title: 'Archivo no válido' })
+        setPendingBackup(validateBackup(JSON.parse(r.result)))
+      } catch (err) {
+        toast({ type: 'danger', title: 'Copia no válida', desc: err.message })
       }
     }
     r.readAsText(file)
+  }
+  const confirmRestore = async (mode) => {
+    const b = pendingBackup
+    setRestoring(true)
+    try {
+      if (b.settings) update(migrateSettings(b.settings))
+      let n = 0
+      if (mode !== 'ajustes') n = await restoreData(b.tables, mode)
+      setPendingBackup(null)
+      toast({
+        type: 'success',
+        title: 'Copia restaurada',
+        desc: mode === 'ajustes' ? 'Ajustes aplicados' : `${n} elementos procesados`,
+      })
+    } catch (err) {
+      toast({ type: 'danger', title: 'No se pudo restaurar', desc: err.message })
+    } finally {
+      setRestoring(false)
+    }
   }
 
   // Ordenación de widgets del Inicio (lista completa con hidden)
@@ -1144,31 +1169,60 @@ export default function Ajustes() {
           )}
         </Panel>
 
-        <Panel q={q} keys="copia seguridad exportar importar restablecer backup datos" title="Copia de seguridad" subtitle="Exporta o restaura tu configuración y datos" icon={Download}>
-          <div className="flex flex-wrap gap-2.5">
-            <Button variant="secondary" icon={Download} onClick={exportData}>
-              Exportar copia
-            </Button>
-            <Button variant="secondary" icon={Upload} onClick={() => fileRef.current?.click()}>
-              Importar copia
-            </Button>
+        <Panel q={q} keys="copia seguridad exportar importar restaurar backup datos restablecer" title="Copias de seguridad" subtitle="Tu red de seguridad: ajustes + todos tus datos" icon={Download}>
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-muted">
+              {settings.lastBackupAt ? (
+                <>Última copia: <span className="font-semibold text-ink">{agoLabel(settings.lastBackupAt)}</span></>
+              ) : (
+                <>Aún sin copias — <span className="font-semibold text-ink">exporta la primera</span></>
+              )}
+            </p>
+            <div className="ml-auto flex gap-2.5">
+              <Button variant="primary" icon={Download} onClick={exportData}>
+                Exportar
+              </Button>
+              <Button variant="secondary" icon={Upload} onClick={() => fileRef.current?.click()}>
+                Importar
+              </Button>
+            </div>
             <input ref={fileRef} type="file" accept="application/json" hidden onChange={importData} />
-            <ConfirmButton
-              label="Restablecer TODOS los ajustes"
-              variant="danger"
-              size="md"
-              onConfirm={() => {
-                localStorage.removeItem('summa:settings')
-                localStorage.removeItem('summa:boot-theme')
-                location.reload()
-              }}
-            />
           </div>
-          <p className="mt-3 text-2xs text-subtle">
-            Restablecer solo afecta a los ajustes: tus tareas, finanzas y demás datos siguen intactos en tu nube.
-          </p>
+          <button
+            onClick={() => setMoreBackup((v) => !v)}
+            className="mt-4 flex items-center gap-1 text-2xs font-medium text-subtle transition-colors hover:text-ink"
+          >
+            <ChevronDown size={13} className={cx('transition-transform', moreBackup && 'rotate-180')} />
+            Más opciones
+          </button>
+          {moreBackup && (
+            <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface-2/40 px-3.5 py-3">
+              <ConfirmButton
+                label="Restablecer TODOS los ajustes"
+                variant="danger"
+                size="sm"
+                onConfirm={() => {
+                  localStorage.removeItem('summa:settings')
+                  localStorage.removeItem('summa:boot-theme')
+                  location.reload()
+                }}
+              />
+              <p className="text-2xs text-subtle">
+                Solo afecta a los ajustes: tus tareas, finanzas y demás datos siguen intactos en tu nube.
+              </p>
+            </div>
+          )}
         </Panel>
       </div>
+
+      {pendingBackup && (
+        <ImportBackupModal
+          backup={pendingBackup}
+          busy={restoring}
+          onClose={() => setPendingBackup(null)}
+          onConfirm={confirmRestore}
+        />
+      )}
     </PageContainer>
   )
 }

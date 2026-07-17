@@ -59,6 +59,7 @@ export const DEFAULT_SETTINGS = {
   journalWidth: 'normal', // normal | estrecho
   financeCategories: [], // [{ name, color }]
   moduleViews: {}, // { negocio: 'lista', ... }
+  lastBackupAt: null, // ISO de la última copia exportada
 }
 
 // Migración de esquema: v1 (pre-presets) → v2. Nunca borra nada
