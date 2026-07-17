@@ -4,7 +4,7 @@ import {
   Download, Upload, Palette, LayoutGrid, User, Sparkles, LogOut, Database,
   KeyRound, Home, Type, Search, Shapes, Zap,
   AlertTriangle, X, Plus, Wallet, ListChecks, Dumbbell, Target, NotebookPen,
-  PanelLeft, Coins,
+  PanelLeft, Coins, Wand2,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
@@ -12,7 +12,8 @@ import { useData, TABLES } from '../context/DataContext'
 import {
   ACCENTS, PRESETS, FAMILIES, DENSITIES, ANIMS, BORDER_WIDTHS, HEADING_WEIGHTS,
   SHADOW_STYLES, BG_FX, customAccent, fgForTriplet, getPreset, resolveMode,
-  resolveTokens, hslToHex, hexToHsl, contrastRatio,
+  resolveTokens, hslToHex, hexToHsl, contrastRatio, surpriseTheme, exportTheme,
+  validateTheme,
 } from '../lib/theme'
 import {
   MODULES, ICON_CHOICES, EMOJI_CHOICES, PRIORITIES, prioMeta, moduleName,
@@ -38,6 +39,7 @@ const SECTIONS = [
   { id: 'sec-apariencia', label: 'Apariencia' },
   { id: 'sec-navegacion', label: 'Diseño y navegación' },
   { id: 'sec-modulos', label: 'Módulos' },
+  { id: 'sec-poder', label: 'Poder total' },
   { id: 'sec-cuenta', label: 'Cuenta y datos' },
 ]
 
@@ -231,6 +233,7 @@ export default function Ajustes() {
   const { user, signOut } = useAuth()
   const data = useData()
   const fileRef = useRef()
+  const themeFileRef = useRef()
   const [q, setQ] = useState('')
   const [installEvt, setInstallEvt] = useState(null)
   const [pickerFor, setPickerFor] = useState(null)
@@ -1016,6 +1019,77 @@ export default function Ajustes() {
               />
             </div>
           </div>
+        </Panel>
+
+        {/* ================= PODER TOTAL ================= */}
+        {!searching && <div id="sec-poder" className="pt-4 first:pt-0"><h2 className="font-mono text-2xs font-medium uppercase tracking-[0.16em] text-subtle">Poder total</h2></div>}
+
+        <Panel q={q} keys="sorprendeme aleatorio tema magia armonia generador" title="Sorpréndeme" subtitle="Un tema nuevo con armonía de color real — nunca ruido" icon={Wand2}>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="primary"
+              icon={Wand2}
+              onClick={() => {
+                const t = surpriseTheme()
+                update({ themeOverrides: t.overrides, accent: null, radius: t.radius, shadow: t.shadow, bgFx: t.bgFx })
+                toast({ type: 'success', title: `✨ ${t.name}`, desc: 'Pulsa otra vez si no te convence — o restablece Apariencia.' })
+              }}
+            >
+              Generar tema sorpresa
+            </Button>
+            <p className="text-[13px] text-muted">
+              Cada pulsación crea un tema coherente (tono base + esquema armónico) validado con contraste AA.
+            </p>
+          </div>
+        </Panel>
+
+        <Panel q={q} keys="exportar importar tema compartir json codigo respaldar" title="Compartir tema" subtitle="Exporta tu tema como archivo o importa uno" icon={Download}>
+          <div className="flex flex-wrap gap-2.5">
+            <Button
+              variant="secondary"
+              icon={Download}
+              onClick={() => {
+                const blob = new Blob([JSON.stringify(exportTheme(settings), null, 2)], { type: 'application/json' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = `summa-tema-${settings.preset || 'custom'}-${new Date().toISOString().slice(0, 10)}.json`
+                a.click()
+                URL.revokeObjectURL(url)
+                toast({ type: 'success', title: 'Tema exportado' })
+              }}
+            >
+              Exportar tema
+            </Button>
+            <Button variant="secondary" icon={Upload} onClick={() => themeFileRef.current?.click()}>
+              Importar tema
+            </Button>
+            <input
+              ref={themeFileRef}
+              type="file"
+              accept="application/json"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                e.target.value = ''
+                if (!file) return
+                const r = new FileReader()
+                r.onload = () => {
+                  try {
+                    const patch = validateTheme(JSON.parse(r.result))
+                    update(patch)
+                    toast({ type: 'success', title: 'Tema importado', desc: 'Aplicado al instante.' })
+                  } catch (err) {
+                    toast({ type: 'danger', title: 'Archivo de tema no válido', desc: err.message })
+                  }
+                }
+                r.readAsText(file)
+              }}
+            />
+          </div>
+          <p className="mt-3 text-2xs text-subtle">
+            El archivo solo contiene apariencia (colores, fuente, forma). Tus datos nunca viajan en él.
+          </p>
         </Panel>
 
         {/* ================= CUENTA Y DATOS ================= */}

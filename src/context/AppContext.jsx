@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { applyTheme, resolveMode } from '../lib/theme'
+import { paintFavicon } from '../lib/favicon'
 import { MODULES, HOME_WIDGETS, QUICK_ACTIONS, moduleName } from '../lib/data'
 import { uid, configureMoney, configureLocale } from '../lib/utils'
 
@@ -116,6 +117,13 @@ export function AppProvider({ children }) {
       locale: settings.numberLocale || 'es-ES',
     })
     configureLocale({ timeFormat: settings.timeFormat || '24h', weekStart: settings.weekStart || 'lunes' })
+    // Favicon teñido con el acento (y emoji de instancia si lo hay)
+    const css = getComputedStyle(document.documentElement)
+    paintFavicon({
+      accent: css.getPropertyValue('--accent').trim(),
+      accentFg: css.getPropertyValue('--accent-fg').trim(),
+      emoji: settings.appIcon || null,
+    })
     clearTimeout(themingTimer.current)
     themingTimer.current = setTimeout(
       () => document.documentElement.classList.remove('theming'),

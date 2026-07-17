@@ -551,6 +551,151 @@ export function resolveTokens(settings, mode, route) {
   }
 }
 
+// ---------- "Sorpréndeme": tema aleatorio con armonía real ----------
+// Elige un tono base y un esquema de color (análogo, complementario,
+// triádico o split), construye superficies y texto con luminosidades
+// seguras y valida el contraste — nunca devuelve ruido ilegible.
+const SCHEMES = [
+  { id: 'analogo', name: 'análogo', dh: 35 },
+  { id: 'complementario', name: 'complementario', dh: 180 },
+  { id: 'triadico', name: 'triádico', dh: 120 },
+  { id: 'split', name: 'split', dh: 150 },
+]
+const rnd = (a, b) => a + Math.random() * (b - a)
+const ri = (a, b) => Math.round(rnd(a, b))
+
+export function surpriseTheme() {
+  const h = ri(0, 359)
+  const scheme = SCHEMES[ri(0, SCHEMES.length - 1)]
+  const h2 = (h + scheme.dh + ri(-12, 12) + 360) % 360
+  const sBg = ri(10, 26)
+
+  // Acento: saturado y con luminosidad media-alta; el texto encima
+  // lo decide fgForTriplet por contraste real.
+  const accD = `${h2} ${ri(72, 98)}% ${ri(52, 64)}%`
+  const accL = `${h2} ${ri(65, 92)}% ${ri(34, 46)}%`
+
+  const vizFrom = (base, sat, lumD, lumL, mode) =>
+    [0, 1, 2, 3, 4, 5].map((i) => {
+      const hh = (base + i * 55) % 360
+      return `${hh} ${sat}% ${mode === 'dark' ? lumD : lumL}%`
+    })
+
+  const dark = {
+    bg: `${h} ${sBg}% ${ri(4, 7)}%`,
+    surface: `${h} ${Math.max(8, sBg - 4)}% ${ri(9, 12)}%`,
+    surface2: `${h} ${Math.max(7, sBg - 5)}% ${ri(13, 15)}%`,
+    elevated: `${h} ${Math.max(6, sBg - 6)}% ${ri(16, 18)}%`,
+    border: `${h} ${Math.max(6, sBg - 6)}% ${ri(18, 21)}%`,
+    borderStrong: `${h} ${Math.max(5, sBg - 8)}% ${ri(29, 33)}%`,
+    text: `${h} ${ri(10, 20)}% ${ri(89, 93)}%`,
+    textMuted: `${h} ${ri(6, 12)}% ${ri(66, 71)}%`,
+    textSubtle: `${h} ${ri(4, 9)}% ${ri(46, 52)}%`,
+    accent: accD,
+    accentFg: fgForTriplet(accD),
+    viz: vizFrom(h2, ri(70, 90), ri(55, 62), 0, 'dark'),
+  }
+  const light = {
+    bg: `${h} ${ri(20, 45)}% ${ri(96, 98)}%`,
+    surface: '0 0% 100%',
+    surface2: `${h} ${ri(12, 25)}% ${ri(92, 94)}%`,
+    elevated: '0 0% 100%',
+    border: `${h} ${ri(8, 16)}% ${ri(86, 89)}%`,
+    borderStrong: `${h} ${ri(6, 12)}% ${ri(72, 77)}%`,
+    text: `${h} ${ri(10, 25)}% ${ri(10, 14)}%`,
+    textMuted: `${h} ${ri(6, 14)}% ${ri(32, 38)}%`,
+    textSubtle: `${h} ${ri(5, 10)}% ${ri(46, 52)}%`,
+    accent: accL,
+    accentFg: fgForTriplet(accL),
+    viz: vizFrom(h2, ri(60, 85), 0, ri(34, 44), 'light'),
+  }
+
+  // Garantía de legibilidad: si algún par clave no llega a AA, se corrige.
+  if (contrastRatio(dark.text, dark.bg) < 7) dark.text = `${h} 15% 92%`
+  if (contrastRatio(light.text, light.bg) < 7) light.text = `${h} 20% 12%`
+
+  return {
+    name: `Tono ${h2}º ${scheme.name}`,
+    overrides: { dark, light },
+    radius: [0, 4, 6, 8, 10, 12, 14, 16][ri(0, 7)],
+    shadow: SHADOW_STYLES[ri(0, 2)].id,
+    bgFx: BG_FX[ri(0, BG_FX.length - 1)].id,
+  }
+}
+
+// ---------- Exportar / importar tema como JSON ----------
+const TRIPLET_RE = /^[\d.]{1,6} [\d.]{1,5}% [\d.]{1,5}%$/
+const TOKEN_KEYS = [
+  'bg', 'surface', 'surface2', 'elevated', 'border', 'borderStrong',
+  'text', 'textMuted', 'textSubtle', 'accent', 'accentFg',
+  'success', 'warning', 'danger', 'info',
+]
+
+export function exportTheme(settings) {
+  return {
+    kind: 'summa-theme',
+    version: 1,
+    preset: settings.preset || DEFAULT_PRESET,
+    accent: settings.accent || null,
+    themeOverrides: settings.themeOverrides || {},
+    font: settings.font || null,
+    radius: settings.radius ?? null,
+    shadow: settings.shadow || null,
+    borderW: settings.borderW || null,
+    headingWeight: settings.headingWeight || null,
+    density: settings.density || 'normal',
+    anim: settings.anim || 'completas',
+    bgFx: settings.bgFx || null,
+  }
+}
+
+// Validación estricta: nunca se aplica un JSON malformado.
+// Devuelve el parche de ajustes limpio o lanza un Error legible.
+export function validateTheme(parsed) {
+  if (!parsed || typeof parsed !== 'object') throw new Error('No es un JSON válido')
+  if (parsed.kind !== 'summa-theme') throw new Error('No es un archivo de tema de Summa')
+  const out = {}
+
+  out.preset = PRESETS.some((p) => p.id === parsed.preset) ? parsed.preset : DEFAULT_PRESET
+
+  if (parsed.accent && typeof parsed.accent === 'object' && TRIPLET_RE.test(parsed.accent.hsl || '')) {
+    out.accent = {
+      id: 'custom',
+      name: 'Personalizado',
+      hsl: parsed.accent.hsl,
+      fg: TRIPLET_RE.test(parsed.accent.fg || '') ? parsed.accent.fg : fgForTriplet(parsed.accent.hsl),
+    }
+  } else {
+    out.accent = null
+  }
+
+  const cleanTokens = (o) => {
+    if (!o || typeof o !== 'object') return {}
+    const t = {}
+    for (const k of TOKEN_KEYS) if (TRIPLET_RE.test(o[k] || '')) t[k] = o[k]
+    if (Array.isArray(o.viz)) {
+      const viz = o.viz.filter((v) => TRIPLET_RE.test(v || '')).slice(0, 6)
+      if (viz.length === 6) t.viz = viz
+    }
+    return t
+  }
+  out.themeOverrides = {
+    dark: cleanTokens(parsed.themeOverrides?.dark),
+    light: cleanTokens(parsed.themeOverrides?.light),
+  }
+
+  out.font = FAMILIES.some((f) => f.id === parsed.font) ? parsed.font : null
+  out.radius = Number.isFinite(parsed.radius) ? Math.max(0, Math.min(24, Math.round(parsed.radius))) : null
+  out.shadow = SHADOW_STYLES.some((s) => s.id === parsed.shadow) ? parsed.shadow : null
+  out.borderW = BORDER_WIDTHS.some((b) => b.id === parsed.borderW) ? parsed.borderW : null
+  out.headingWeight = HEADING_WEIGHTS.some((hw) => hw.id === parsed.headingWeight) ? parsed.headingWeight : null
+  out.density = DENSITIES.some((d) => d.id === parsed.density) ? parsed.density : 'normal'
+  out.anim = ANIMS.some((a) => a.id === parsed.anim) ? parsed.anim : 'completas'
+  out.bgFx = BG_FX.some((b) => b.id === parsed.bgFx) ? parsed.bgFx : null
+
+  return out
+}
+
 const BOOT_KEY = 'summa:boot-theme'
 
 // ---------- Aplicación al DOM ----------
