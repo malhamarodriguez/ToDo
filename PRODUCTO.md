@@ -29,6 +29,12 @@ alter table public.profiles
 -- Módulo Fiscal: gastos deducibles (si no lo ejecutaste ya)
 alter table public.movements
   add column if not exists deductible boolean default false;
+
+-- Multi-venture: etiqueta opcional en 4 tablas
+alter table public.movements add column if not exists venture text default '';
+alter table public.tasks add column if not exists venture text default '';
+alter table public.notes add column if not exists venture text default '';
+alter table public.goals add column if not exists venture text default '';
 ```
 
 ### Activarte Pro a ti mismo (tu cuenta personal)

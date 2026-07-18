@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Plus, LayoutList, Columns3, SlidersHorizontal, Briefcase, FolderPlus, Trash2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { ventureFilter } from '../lib/ventures'
+import { VentureChips } from '../components/app/VentureChips'
 import { useData } from '../context/DataContext'
 import { PageContainer, PageHeader } from '../components/layout/Page'
 import { KanbanBoard } from '../components/app/Kanban'
@@ -12,7 +14,9 @@ import { canCreate, FREE_LIMITS } from '../lib/plan'
 
 export default function Negocio() {
   const { setQuickAdd, setUpgradeOpen, settings } = useApp()
-  const { tasks, projects, remove, isPro } = useData()
+  const { tasks: allTasks, projects, remove, isPro } = useData()
+  const [vSel, setVSel] = useState('todos')
+  const tasks = ventureFilter(settings, allTasks, vSel)
   const newProject = () => {
     if (!canCreate('projects', projects.length, isPro)) {
       return setUpgradeOpen(`El plan Gratis incluye ${FREE_LIMITS.projects} proyectos — pasa a Pro para crear ilimitados.`)
@@ -52,6 +56,8 @@ export default function Negocio() {
           </>
         }
       />
+
+      <VentureChips settings={settings} rows={allTasks} value={vSel} onChange={setVSel} className="mb-4" />
 
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((s) => (

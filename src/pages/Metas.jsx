@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Plus, Target, Briefcase, Wallet, HeartPulse, Sparkles, Trash2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
+import { ventureFilter, venturesOf } from '../lib/ventures'
+import { VentureChips } from '../components/app/VentureChips'
 import { useData } from '../context/DataContext'
 import { AREAS } from '../lib/data'
 import { PageContainer, PageHeader } from '../components/layout/Page'
@@ -31,7 +33,9 @@ function valueLabel(g) {
 
 export default function Metas() {
   const { setUpgradeOpen, settings } = useApp()
-  const { goals, remove, isPro } = useData()
+  const { goals: allGoals, remove, isPro } = useData()
+  const [vSel, setVSel] = useState('todos')
+  const goals = ventureFilter(settings, allGoals, vSel)
   const [open, setOpen] = useState(false)
   const newGoal = () => {
     if (!canCreate('goals', goals.length, isPro)) {
@@ -52,6 +56,8 @@ export default function Metas() {
         subtitle="Lo que mueve la aguja, por área de tu vida."
         actions={<Button variant="primary" icon={Plus} onClick={newGoal}><span className="hidden sm:inline">Nueva meta</span></Button>}
       />
+
+      <VentureChips settings={settings} rows={allGoals} value={vSel} onChange={setVSel} className="mb-4" />
 
       {goals.length === 0 ? (
         <Card>
@@ -130,6 +136,7 @@ export default function Metas() {
           { key: 'value', label: 'Actual', type: 'number', default: 0 },
           { key: 'target', label: 'Objetivo', type: 'number', default: 100 },
           { key: 'unit', label: 'Unidad', type: 'text', placeholder: '€, kg, hitos…' },
+          { key: 'venture', label: 'Venture', type: 'select', default: '', options: venturesOf(settings).map((v) => ({ value: v.id === 'personal' ? '' : v.id, label: `${v.icon} ${v.name}` })) },
         ]}
       />
       )}

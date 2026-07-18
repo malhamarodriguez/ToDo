@@ -14,6 +14,7 @@ import Informe from './pages/Informe'
 import Admin from './pages/Admin'
 import Fiscal from './pages/Fiscal'
 import Hoy from './pages/Hoy'
+import Ventures from './pages/Ventures'
 
 const PAGES = {
   inicio: Inicio,
@@ -25,6 +26,7 @@ const PAGES = {
   diario: Diario,
   calendario: Calendario,
   fiscal: Fiscal,
+  ventures: Ventures,
   ajustes: Ajustes,
   informe: Informe,
   admin: Admin,

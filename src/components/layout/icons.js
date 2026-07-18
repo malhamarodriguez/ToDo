@@ -1,6 +1,7 @@
 import {
   Home,
   Landmark,
+  Layers,
   Briefcase,
   Wallet,
   Dumbbell,
@@ -21,6 +22,7 @@ import {
 export const ICONS = {
   Home,
   Landmark,
+  Layers,
   Briefcase,
   Wallet,
   Dumbbell,

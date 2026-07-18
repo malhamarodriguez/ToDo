@@ -3,6 +3,7 @@ import { applyTheme, resolveMode } from '../lib/theme'
 import { paintFavicon } from '../lib/favicon'
 import { MODULES, HOME_WIDGETS, QUICK_ACTIONS, moduleName } from '../lib/data'
 import { uid, configureMoney, configureLocale } from '../lib/utils'
+import { DEFAULT_VENTURES } from '../lib/ventures'
 
 const FONT_SCALES = { sm: '14.5px', md: '16px', lg: '17.5px', xl: '19px' }
 
@@ -61,6 +62,8 @@ export const DEFAULT_SETTINGS = {
   moduleViews: {}, // { negocio: 'lista', ... }
   lastBackupAt: null, // ISO de la última copia exportada
   fiscal: {}, // módulo Fiscal: % IVA/IRPF, régimen, cuota, trimestres cerrados
+  ventures: DEFAULT_VENTURES, // frentes de negocio/vida (editable)
+  timeLog: [], // bloques de tiempo por venture [{id, venture, mins, date}]
 }
 
 // Migración de esquema: v1 (pre-presets) → v2. Nunca borra nada

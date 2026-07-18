@@ -19,6 +19,7 @@ create table if not exists public.projects (
   user_id uuid not null references auth.users (id) on delete cascade,
   name text not null,
   color text default '243 76% 64%',
+  venture text default '',
   created_at timestamptz default now()
 );
 
@@ -35,6 +36,7 @@ create table if not exists public.tasks (
   subtasks jsonb default '[]'::jsonb,
   tags text[] default '{}',
   position double precision default 0,
+  venture text default '',
   created_at timestamptz default now()
 );
 
@@ -59,6 +61,7 @@ create table if not exists public.goals (
   target numeric default 100,
   unit text default '',
   invert boolean default false,
+  venture text default '',
   created_at timestamptz default now()
 );
 
@@ -72,6 +75,7 @@ create table if not exists public.movements (
   recurring boolean default false,
   kind text default 'out',
   deductible boolean default false, -- gasto deducible (módulo Fiscal)
+  venture text default '', -- frente al que pertenece (Multi-venture)
   created_at timestamptz default now()
 );
 

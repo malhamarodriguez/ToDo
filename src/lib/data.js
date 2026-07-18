@@ -73,6 +73,7 @@ export const MODULES = [
   { id: 'diario', name: 'Diario', icon: 'NotebookPen' },
   { id: 'calendario', name: 'Calendario', icon: 'Calendar' },
   { id: 'fiscal', name: 'Fiscal', icon: 'Landmark' },
+  { id: 'ventures', name: 'Ventures', icon: 'Layers' },
 ]
 
 // Nombre de módulo personalizado por el usuario ("Negocio" → "Estudios"…)

@@ -3,6 +3,7 @@ import { Plus, X, Repeat } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
 import { PRIORITIES, prioMeta } from '../../lib/data'
+import { venturesOf } from '../../lib/ventures'
 import { todayISO, cx } from '../../lib/utils'
 import { parseTask, RECUR_OPTIONS, getRecur, withRecur } from '../../lib/nlp'
 import { Modal, Button, Label, Input, Select, Checkbox, Segmented } from '../ui'
@@ -20,6 +21,7 @@ export function TaskModal() {
   const [subtasks, setSubtasks] = useState([])
   const [subDraft, setSubDraft] = useState('')
   const [recur, setRecur] = useState('')
+  const [venture, setVenture] = useState('personal')
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
@@ -31,6 +33,7 @@ export function TaskModal() {
     setToday(editing ? Boolean(editing.today) : true)
     setSubtasks(editing?.subtasks || [])
     setRecur(editing ? getRecur(editing) : '')
+    setVenture(editing?.venture || 'personal')
     setSubDraft('')
   }, [taskModal]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -58,6 +61,7 @@ export function TaskModal() {
       today: today || nlp.due === todayISO(),
       subtasks,
       tags: withRecur(editing?.tags, recur),
+      venture: venture === 'personal' ? '' : venture,
     }
     if (editing) {
       await update('tasks', editing.id, payload)
@@ -136,6 +140,14 @@ export function TaskModal() {
           <div>
             <Label hint="opcional">Fecha límite</Label>
             <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} />
+          </div>
+          <div className="col-span-2">
+            <Label hint="opcional">Venture</Label>
+            <Select value={venture} onChange={(e) => setVenture(e.target.value)}>
+              {venturesOf(settings).map((v) => (
+                <option key={v.id} value={v.id}>{v.icon} {v.name}</option>
+              ))}
+            </Select>
           </div>
         </div>
 

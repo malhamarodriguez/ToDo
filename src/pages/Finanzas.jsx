@@ -13,6 +13,8 @@ import {
   Table, THead, TH, TBody, TR, TD, EmptyState, Modal, Label, Input,
 } from '../components/ui'
 import { RecordModal } from '../components/app/RecordModal'
+import { venturesOf, ventureFilter } from '../lib/ventures'
+import { VentureChips } from '../components/app/VentureChips'
 import { eur, signedEur, cx, todayISO } from '../lib/utils'
 import { canCreate, FREE_LIMITS } from '../lib/plan'
 
@@ -112,7 +114,10 @@ function SalaryModal({ open, onClose }) {
 export default function Finanzas() {
   const { settings, toast, setUpgradeOpen, navigate } = useApp()
   const c = useThemeColors()
-  const { movements, budgets, savings, holdings, clients, recurring, add, remove, isPro } = useData()
+  const { movements: allMovements, budgets, savings, holdings, clients, recurring, add, remove, isPro } = useData()
+  const [vSel, setVSel] = useState('todos')
+  // Filtro por venture (los KPI, gráficos y tablas lo respetan)
+  const movements = ventureFilter(settings, allMovements, vSel)
   const [modal, setModal] = useState(null) // 'movement' | {type,row} | 'salary'
 
   // Límites del plan Gratis en colecciones "pro"
@@ -197,6 +202,16 @@ export default function Finanzas() {
     if (catNames.length) {
       cfg = { ...cfg, fields: cfg.fields.map((f) => (f.key === 'category' ? { ...f, suggestions: catNames } : f)) }
     }
+    // Venture opcional en movimientos (discreto, por defecto Personal)
+    if (cfg.table === 'movements' && !cfg.fields.some((f) => f.key === 'venture')) {
+      cfg = {
+        ...cfg,
+        fields: [
+          ...cfg.fields,
+          { key: 'venture', label: 'Venture', type: 'select', default: '', options: venturesOf(settings).map((v) => ({ value: v.id === 'personal' ? '' : v.id, label: `${v.icon} ${v.name}` })) },
+        ],
+      }
+    }
   }
   const editingRow = typeof modal === 'object' && modal ? modal.row : null
 
@@ -217,6 +232,8 @@ export default function Finanzas() {
           </>
         }
       />
+
+      <VentureChips settings={settings} rows={allMovements} value={vSel} onChange={setVSel} className="mb-4" />
 
       {pendingFixed.length > 0 && (
         <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-accent/25 bg-accent/[0.06] px-4 py-3">

@@ -4,6 +4,8 @@ import { useData } from '../context/DataContext'
 import { useApp } from '../context/AppContext'
 import { loadFont } from '../lib/theme'
 import { MOODS, COLOR_CHOICES } from '../lib/data'
+import { ventureFilter, venturesOf } from '../lib/ventures'
+import { VentureChips, VentureDot } from '../components/app/VentureChips'
 import { PageContainer, PageHeader } from '../components/layout/Page'
 import { Card, CardBody, Button, Textarea, Badge, SectionTitle, EmptyState } from '../components/ui'
 import { RecordModal } from '../components/app/RecordModal'
@@ -12,7 +14,8 @@ import { relDay, todayISO } from '../lib/utils'
 const MOOD_ICONS = { enfocado: Sparkles, motivado: Smile, cansado: Battery, neutro: Meh }
 
 export default function Diario() {
-  const { journal, notes, add, remove } = useData()
+  const { journal, notes: allNotes, add, remove } = useData()
+  const notes = ventureFilter(settings, allNotes, vSel)
   const { settings } = useApp()
   // Preferencias de lectura del diario (Ajustes → Módulos)
   const readStyle = {
@@ -23,6 +26,8 @@ export default function Diario() {
     if (settings.journalFont === 'serif') loadFont('serif')
   }, [settings.journalFont])
   const [draft, setDraft] = useState('')
+  const [draftVenture, setDraftVenture] = useState('')
+  const [vSel, setVSel] = useState('todos')
   const [entryOpen, setEntryOpen] = useState(false)
   const [noteOpen, setNoteOpen] = useState(null)
 
@@ -31,7 +36,7 @@ export default function Diario() {
   const addNote = async () => {
     if (!draft.trim()) return
     const color = COLOR_CHOICES[notes.length % COLOR_CHOICES.length]
-    await add('notes', { text: draft.trim(), color })
+    await add('notes', { text: draft.trim(), color, venture: draftVenture })
     setDraft('')
   }
 
@@ -43,6 +48,8 @@ export default function Diario() {
         subtitle="Cierra el día, captura ideas, ordena la cabeza."
         actions={<Button variant="primary" icon={Plus} onClick={() => setEntryOpen(true)}><span className="hidden sm:inline">Nueva entrada</span></Button>}
       />
+
+      <VentureChips settings={settings} rows={allNotes} value={vSel} onChange={setVSel} className="mb-4" />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className={settings.journalWidth === 'estrecho' ? 'mx-auto w-full max-w-xl lg:col-span-7' : 'lg:col-span-7'}>
@@ -79,7 +86,18 @@ export default function Diario() {
           <Card className="mb-4">
             <CardBody>
               <Textarea placeholder="Anota una idea al vuelo…" value={draft} onChange={(e) => setDraft(e.target.value)} />
-              <div className="mt-2.5 flex justify-end"><Button variant="soft" size="sm" icon={Plus} onClick={addNote}>Guardar nota</Button></div>
+              <div className="mt-2.5 flex items-center justify-end gap-2">
+                <select
+                  value={draftVenture}
+                  onChange={(e) => setDraftVenture(e.target.value)}
+                  className="h-8 rounded-lg border border-line bg-surface-2 px-2 text-2xs text-muted focus:border-accent/50 focus:outline-none"
+                >
+                  {venturesOf(settings).map((v) => (
+                    <option key={v.id} value={v.id === 'personal' ? '' : v.id}>{v.icon} {v.name}</option>
+                  ))}
+                </select>
+                <Button variant="soft" size="sm" icon={Plus} onClick={addNote}>Guardar nota</Button>
+              </div>
             </CardBody>
           </Card>
 
@@ -94,6 +112,7 @@ export default function Diario() {
                 >
                   <StickyNote size={15} className="mb-2" style={{ color: `hsl(${n.color})` }} />
                   <p className="text-[13px] leading-relaxed text-ink">{n.text}</p>
+                  <VentureDot settings={settings} row={n} />
                 </button>
               ))}
             </div>
