@@ -741,6 +741,7 @@ export default function Ajustes() {
             <div>
               <Label hint="al abrir la app">Pantalla inicial</Label>
               <Select value={settings.startModule || 'inicio'} onChange={(e) => update({ startModule: e.target.value })}>
+                <option value="hoy">Hoy (minimalista)</option>
                 {settings.modules.filter((m) => !m.hidden).map((m) => (
                   <option key={m.id} value={m.id}>{moduleName(settings, m.id)}</option>
                 ))}

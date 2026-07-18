@@ -9,6 +9,7 @@ import { resolveMode } from '../../lib/theme'
 const MODULE_ROUTES = ['negocio', 'finanzas', 'deporte', 'metas', 'diario', 'calendario']
 function titleFor(route, settings) {
   if (route === 'inicio' || !route) return 'Panel central'
+  if (route === 'hoy') return 'Hoy'
   if (route === 'ajustes') return 'Ajustes'
   if (route === 'informe') return 'Informe mensual'
   if (route === 'admin') return 'Gestión'

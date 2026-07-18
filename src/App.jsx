@@ -13,9 +13,11 @@ import Ajustes from './pages/Ajustes'
 import Informe from './pages/Informe'
 import Admin from './pages/Admin'
 import Fiscal from './pages/Fiscal'
+import Hoy from './pages/Hoy'
 
 const PAGES = {
   inicio: Inicio,
+  hoy: Hoy,
   negocio: Negocio,
   finanzas: Finanzas,
   deporte: Deporte,
