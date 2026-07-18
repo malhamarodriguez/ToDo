@@ -39,9 +39,9 @@ export function demoSeed() {
       { id: uid(), title: 'Sprint v2', sub: '', date: d(2), end_date: d(4), duration: 'dias', color: '158 64% 44%' },
     ],
     goals: [
-      { id: uid(), area: 'Negocio', title: 'Facturación trimestral', type: 'numeric', value: 28500, target: 40000, unit: '€' },
+      { id: uid(), area: 'Negocio', title: 'Facturación trimestral', type: 'numeric', value: 0, target: 12000, unit: '€', metric: 'facturacion_tri', venture: 'alh' },
       { id: uid(), area: 'Finanzas', title: 'Fondo de emergencia', type: 'percent', value: 72, target: 100 },
-      { id: uid(), area: 'Salud', title: 'Entrenos este mes', type: 'numeric', value: 14, target: 18, unit: '' },
+      { id: uid(), area: 'Salud', title: 'Entrenos este mes', type: 'numeric', value: 0, target: 18, unit: '', metric: 'entrenos_mes' },
       { id: uid(), area: 'Personal', title: 'Alemán B2', type: 'percent', value: 62, target: 100 },
     ],
     movements: [
@@ -79,7 +79,7 @@ export function demoSeed() {
     ],
     workouts: [
       { id: uid(), name: 'Empuje · Pecho', date: d(0), dur: 58, exercises: [{ name: 'Press banca', sets: '4×8', kg: 80 }, { name: 'Fondos', sets: '3×10', kg: 15 }] },
-      { id: uid(), name: 'Carrera Z2', date: d(-1), dur: 35, exercises: [] },
+      { id: uid(), name: 'Carrera Z2', date: d(-1), dur: 35, km: 6.4, exercises: [] },
       { id: uid(), name: 'Tirón · Espalda', date: d(-2), dur: 62, exercises: [{ name: 'Dominadas', sets: '4×8', kg: 10 }] },
       { id: uid(), name: 'Piernas', date: d(-4), dur: 55, exercises: [] },
     ],

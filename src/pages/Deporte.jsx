@@ -2,13 +2,15 @@ import { useState } from 'react'
 import { Plus, Flame, Dumbbell, Trophy, Timer, Medal, Activity, TrendingDown, Trash2, Scale } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { useApp } from '../context/AppContext'
+import { ChevronDown, Gauge } from 'lucide-react'
+import { GroupedBars } from '../components/charts'
 import { streakFromDates, ACHIEVEMENTS } from '../lib/data'
 import { PageContainer, PageHeader } from '../components/layout/Page'
 import { TrendArea } from '../components/charts'
 import { useThemeColors } from '../components/charts/useThemeColors'
 import { Card, CardHeader, CardBody, Button, Badge, EmptyState } from '../components/ui'
 import { RecordModal } from '../components/app/RecordModal'
-import { cx, todayISO, relDay } from '../lib/utils'
+import { cx, todayISO, relDay, isoShort } from '../lib/utils'
 
 const ACH_ICONS = { flame: Flame, dumbbell: Dumbbell, trophy: Trophy, timer: Timer, medal: Medal }
 
@@ -45,12 +47,67 @@ function StreakGrid({ dates }) {
 
 const isoOf = (d) => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 10) }
 
+// Volumen de un ejercicio: "4×8" × kg → series·reps·kg; número suelto → sets·kg
+function exVolume(e) {
+  const kg = Number(e.kg) || 0
+  if (!kg) return 0
+  const m = String(e.sets || '').match(/(\d+)\s*[×x]\s*(\d+)/)
+  if (m) return Number(m[1]) * Number(m[2]) * kg
+  const n = Number(e.sets)
+  return Number.isFinite(n) && n > 0 ? n * kg : kg
+}
+
+function fmtPace(minPerKm) {
+  const mm = Math.floor(minPerKm)
+  const ss = Math.round((minPerKm - mm) * 60)
+  return `${mm}:${String(ss).padStart(2, '0')}`
+}
+
 export default function Deporte() {
   const c = useThemeColors()
   const { workouts, metrics, remove } = useData()
   const { settings } = useApp()
   const wUnit = settings.units?.weight || 'kg'
+  const dUnit = settings.units?.distance || 'km'
+
+  // Rendimiento: PRs por ejercicio, volumen semanal y ritmo de carrera
+  const prs = (() => {
+    const best = {}
+    for (const w of workouts) {
+      for (const e of w.exercises || []) {
+        if (!e.name || !Number(e.kg)) continue
+        if (!best[e.name] || Number(e.kg) > best[e.name].kg) {
+          best[e.name] = { kg: Number(e.kg), date: w.date, sets: e.sets }
+        }
+      }
+    }
+    return Object.entries(best).sort((a, b) => b[1].kg - a[1].kg).slice(0, 6)
+  })()
+
+  const weeklyVolume = (() => {
+    const weeks = {}
+    for (const w of workouts) {
+      const d = new Date(String(w.date).slice(0, 10))
+      if (Number.isNaN(d.getTime())) continue
+      const monday = new Date(d)
+      monday.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+      const key = monday.toISOString().slice(0, 10)
+      const vol = (w.exercises || []).reduce((a, e) => a + exVolume(e), 0)
+      weeks[key] = (weeks[key] || 0) + vol
+    }
+    return Object.entries(weeks)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-8)
+      .map(([k, v]) => ({ w: isoShort(k), vol: Math.round(v) }))
+  })()
+
+  const runs = workouts
+    .filter((w) => Number(w.km) > 0 && Number(w.dur) > 0)
+    .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+  const lastPace = runs.length ? runs[0].dur / runs[0].km : null
+  const bestPace = runs.length ? Math.min(...runs.map((r) => r.dur / r.km)) : null
   const [modal, setModal] = useState(null)
+  const [perfOpen, setPerfOpen] = useState(false)
 
   const dateSet = new Set(workouts.map((w) => String(w.date).slice(0, 10)))
   let streak = 0
@@ -102,6 +159,60 @@ export default function Deporte() {
       <Card className="mb-5">
         <CardHeader title="Hábito de entreno" subtitle="Tu constancia, día a día" icon={Flame} />
         <CardBody className="pt-3"><StreakGrid dates={workouts.map((w) => w.date)} /></CardBody>
+      </Card>
+
+      {/* Rendimiento: profundidad bajo demanda */}
+      <Card className="mb-5">
+        <button onClick={() => setPerfOpen((v) => !v)} className="flex w-full items-center gap-3 px-5 py-4 text-left" aria-expanded={perfOpen}>
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-2 text-muted"><Trophy size={17} /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-semibold text-ink">Rendimiento</span>
+            <span className="block truncate text-[13px] text-muted">
+              {prs.length ? `${prs.length} récords` : 'Récords, volumen y ritmo'}
+              {lastPace ? ` · ritmo ${fmtPace(lastPace)} min/${dUnit}` : ''}
+            </span>
+          </span>
+          <ChevronDown size={16} className={cx('shrink-0 text-subtle transition-transform', perfOpen && 'rotate-180')} />
+        </button>
+        {perfOpen && (
+          <CardBody className="pt-0">
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <div>
+                <p className="mb-2 font-mono text-2xs font-medium uppercase tracking-wide text-subtle">Récords personales</p>
+                {prs.length ? (
+                  <div className="space-y-1.5">
+                    {prs.map(([name, b]) => (
+                      <div key={name} className="flex items-center gap-3 rounded-lg border border-line bg-surface-2/40 px-3 py-2 text-[13px]">
+                        <Trophy size={13} className="shrink-0 text-warning" />
+                        <span className="min-w-0 flex-1 truncate text-ink">{name}</span>
+                        <span className="tabular font-semibold text-ink">{b.kg} {wUnit}</span>
+                        <span className="w-12 shrink-0 text-right font-mono text-2xs text-subtle">{isoShort(b.date)}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[13px] text-subtle">Añade kg a tus ejercicios y aparecerán solos.</p>
+                )}
+                {runs.length > 0 && (
+                  <div className="mt-4 flex items-center gap-3 rounded-lg border border-line bg-surface-2/40 px-3 py-2.5 text-[13px]">
+                    <Gauge size={14} className="shrink-0 text-accent" />
+                    <span className="text-muted">Ritmo</span>
+                    <span className="tabular font-semibold text-ink">{fmtPace(lastPace)} min/{dUnit}</span>
+                    <span className="ml-auto text-2xs text-subtle">mejor: {fmtPace(bestPace)}</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="mb-2 font-mono text-2xs font-medium uppercase tracking-wide text-subtle">Volumen semanal ({wUnit})</p>
+                {weeklyVolume.length > 1 ? (
+                  <GroupedBars data={weeklyVolume} xKey="w" series={[{ key: 'vol', name: 'Volumen' }]} height={180} />
+                ) : (
+                  <p className="text-[13px] text-subtle">Con un par de semanas de entrenos con kg, verás tu volumen aquí.</p>
+                )}
+              </div>
+            </div>
+          </CardBody>
+        )}
       </Card>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
@@ -176,6 +287,7 @@ export default function Deporte() {
             { key: 'name', label: 'Nombre', type: 'text', required: true, autoFocus: true, placeholder: 'Empuje, Carrera…', full: true },
             { key: 'date', label: 'Fecha', type: 'date', default: todayISO() },
             { key: 'dur', label: 'Duración (min)', type: 'number' },
+            { key: 'km', label: `Distancia (${settings.units?.distance || 'km'})`, type: 'number', step: '0.1', hint: 'solo carreras — para tu ritmo' },
           ]} />
       )}
       {modal === 'metric' && (

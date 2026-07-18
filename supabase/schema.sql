@@ -62,6 +62,7 @@ create table if not exists public.goals (
   unit text default '',
   invert boolean default false,
   venture text default '',
+  metric text default '', -- meta vinculada a dato real
   created_at timestamptz default now()
 );
 
@@ -135,6 +136,7 @@ create table if not exists public.workouts (
   name text not null,
   date date,
   dur integer default 0,
+  km numeric, -- distancia (ritmos de carrera)
   exercises jsonb default '[]'::jsonb,
   created_at timestamptz default now()
 );

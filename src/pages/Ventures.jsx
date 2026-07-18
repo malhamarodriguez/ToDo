@@ -13,11 +13,8 @@ import { eur, signedEur, todayISO, isoShort, cx, uid, clamp } from '../lib/utils
 
 const monthOf = (iso) => String(iso || '').slice(0, 7)
 
-function goalPct(g) {
-  if (g.type === 'percent') return Math.round(g.value)
-  if (g.invert) return clamp(Math.round((g.target / g.value) * 100), 0, 100)
-  return clamp(Math.round((g.value / Math.max(g.target, 1)) * 100), 0, 100)
-}
+import { goalPct as goalPctData } from '../lib/goals'
+const goalPct = (g, data) => goalPctData(g, data)
 
 // Datos por venture: balance del mes, tareas abiertas, objetivo activo
 function ventureStats(settings, data, vid) {
@@ -28,7 +25,7 @@ function ventureStats(settings, data, vid) {
     .filter((m) => monthOf(m.date) === month)
     .reduce((a, m) => a + Number(m.amount), 0)
   const open = mine(data.tasks).filter((t) => t.status !== 'done')
-  const goal = mine(data.goals).find((g) => goalPct(g) < 100) || mine(data.goals)[0]
+  const goal = mine(data.goals).find((g) => goalPct(g, data) < 100) || mine(data.goals)[0]
   return { balance, open, goal, movs }
 }
 
@@ -258,7 +255,7 @@ export default function Ventures() {
               <p className="mb-2 font-mono text-2xs font-medium uppercase tracking-[0.12em] text-subtle">Objetivo activo</p>
               <button onClick={() => navigate('metas')} className="flex w-full items-center justify-between rounded-xl border border-line bg-surface px-4 py-3 text-left hover:border-accent/40">
                 <span className="min-w-0 truncate text-sm font-medium text-ink">{st.goal.title}</span>
-                <span className="shrink-0 font-semibold tabular text-accent">{goalPct(st.goal)}%</span>
+                <span className="shrink-0 font-semibold tabular text-accent">{goalPct(st.goal, data)}%</span>
               </button>
             </section>
           )}
@@ -336,7 +333,7 @@ export default function Ventures() {
                   <div className="flex items-center justify-between gap-3">
                     <span className="shrink-0 text-subtle">Objetivo</span>
                     <span className="min-w-0 truncate text-right font-medium text-ink">
-                      {st.goal ? `${st.goal.title} · ${goalPct(st.goal)}%` : '—'}
+                      {st.goal ? `${st.goal.title} · ${goalPct(st.goal, data)}%` : '—'}
                     </span>
                   </div>
                 </div>

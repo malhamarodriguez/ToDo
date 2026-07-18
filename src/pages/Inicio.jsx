@@ -3,7 +3,9 @@ import {
   Plus, Receipt, PenLine, Dumbbell, ArrowRight, Check, ChevronRight,
   Wallet, TrendingUp, CalendarClock, Target, Play, Timer, X, Sparkles, Banknote, Flame, Download,
 } from 'lucide-react'
-import { toggleHabitLog, habitStreak, habitWeek, habitDoneOn, HABIT_COLORS } from '../lib/habits'
+import { toggleHabitLog, habitStreak, habitWeek, habitDoneOn, habitYearDates, HABIT_COLORS } from '../lib/habits'
+import { streakFromDates } from '../lib/data'
+import { goalPct as goalPctLib } from '../lib/goals'
 import { backupOverdue } from '../lib/backup'
 import { BETA_FREE } from '../lib/plan'
 import { uid, todayISO as tISO } from '../lib/utils'
@@ -14,11 +16,6 @@ import { TaskRow } from '../components/app/TaskRow'
 import { Card, CardHeader, CardBody, Button, Badge, ProgressBar, ProgressRing, Switch, EmptyState } from '../components/ui'
 import { renderGreeting, longDate, signedEur, eur, clamp, cx, capitalize, todayISO, taskOverdue, taskToday, fmtTime } from '../lib/utils'
 
-function goalPct(g) {
-  if (g.type === 'percent') return Math.round(g.value)
-  if (g.invert) return clamp(Math.round((g.target / g.value) * 100), 0, 100)
-  return clamp(Math.round((g.value / Math.max(g.target, 1)) * 100), 0, 100)
-}
 const monthOf = (iso) => String(iso || '').slice(0, 7)
 
 // ---------- Primeros pasos (onboarding) ----------
@@ -95,10 +92,29 @@ function Onboarding() {
 }
 
 // ---------- Hábitos personalizados ----------
+function HabitYear({ log, habitId, color }) {
+  const cells = streakFromDates(habitYearDates(log, habitId), 363)
+  return (
+    <div className="overflow-x-auto pb-1">
+      <div className="grid w-max grid-flow-col grid-rows-7 gap-[3px]">
+        {cells.map((c, i) => (
+          <span
+            key={i}
+            title={c.date.toLocaleDateString('es-ES')}
+            className="h-2 w-2 rounded-[2px]"
+            style={{ background: c.level ? `hsl(${color})` : 'hsl(var(--border) / 0.6)' }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function HabitsWidget() {
   const { settings, update, toast, setUpgradeOpen } = useApp()
   const { isPro } = useData()
   const [draft, setDraft] = useState('')
+  const [yearFor, setYearFor] = useState(null)
   const habits = settings.habits || []
   const log = settings.habitLog || {}
 
@@ -140,7 +156,13 @@ function HabitsWidget() {
                 <Check size={14} strokeWidth={3} />
               </button>
               <div className="min-w-0 flex-1">
-                <p className={cx('truncate text-[13px] font-medium', done ? 'text-ink' : 'text-muted')}>{h.name}</p>
+                <button
+                  onClick={() => setYearFor(yearFor === h.id ? null : h.id)}
+                  title="Ver el año"
+                  className={cx('block w-full truncate text-left text-[13px] font-medium hover:text-accent', done ? 'text-ink' : 'text-muted')}
+                >
+                  {h.name}
+                </button>
                 <div className="mt-1 flex items-center gap-1">
                   {habitWeek(log, h.id).map((d) => (
                     <span
@@ -166,6 +188,11 @@ function HabitsWidget() {
             </div>
           )
         })}
+        {yearFor && habits.some((h) => h.id === yearFor) && (
+          <div className="rounded-lg border border-line bg-surface-2/40 p-2.5">
+            <HabitYear log={log} habitId={yearFor} color={habits.find((h) => h.id === yearFor).color} />
+          </div>
+        )}
         <div className="flex gap-2 pt-1">
           <input
             value={draft}
@@ -214,7 +241,8 @@ function BackupNag() {
 
 export default function Inicio() {
   const { settings, navigate, setQuickAdd, toast, focus, startFocus, setReviewOpen } = useApp()
-  const { tasks, events, goals, movements, holdings, workouts, add, remove } = useData()
+  const { tasks, events, goals, movements, holdings, workouts, savings, add, remove } = useData()
+  const goalPct = (g) => goalPctLib(g, { movements, workouts, savings, holdings })
 
   const todays = tasks.filter((t) => (taskToday(t) || taskOverdue(t)) && t.status !== 'done')
   const doneToday = tasks.filter((t) => taskToday(t) && t.status === 'done')

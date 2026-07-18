@@ -32,6 +32,30 @@ function lastMonths(n) {
   return out
 }
 
+// Runway: meses que aguantas con tu líquido si el neto fijo es negativo.
+// Proyección: próximos 3 meses solo con fijos (nómina + recurrentes).
+function runwayProjection({ settings, recurring, savings, holdings, balanceMes }) {
+  const salary = Number(settings.salary) || 0
+  const recIn = recurring.filter((r) => Number(r.amount) > 0).reduce((a, r) => a + Number(r.amount), 0)
+  const recOut = recurring.filter((r) => Number(r.amount) < 0).reduce((a, r) => a + Math.abs(Number(r.amount)), 0)
+  const cuota = Number(settings.fiscal?.cuota) || 0
+  const fixedNet = salary + recIn - recOut - cuota
+  const liquid =
+    savings.reduce((a, x) => a + Number(x.value), 0) +
+    holdings.filter((h) => h.kind !== 'liability').reduce((a, h) => a + Number(h.value), 0)
+  const months = []
+  const now = new Date()
+  let acc = balanceMes
+  for (let i = 1; i <= 3; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
+    acc += fixedNet
+    months.push({ label: MES_ABBR_L[d.getMonth()], net: fixedNet, acc })
+  }
+  const runway = fixedNet >= 0 ? Infinity : liquid / Math.abs(fixedNet)
+  return { fixedNet, liquid, months, runway }
+}
+const MES_ABBR_L = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
 const MODALS = {
   movement: {
     title: 'Nuevo movimiento', noun: 'movimiento', table: 'movements',
@@ -155,6 +179,7 @@ export default function Finanzas() {
   const activos = assetItems.reduce((a, h) => a + Number(h.value), 0)
   const pasivos = liabItems.reduce((a, h) => a + Number(h.value), 0)
   const neto = activos - pasivos
+  const proj = runwayProjection({ settings, recurring, savings, holdings, balanceMes })
 
   const q = lastMonths(3).map((x) => x.key)
   const mQ = movements.filter((m) => q.includes(mKey(m.date)))
@@ -348,6 +373,31 @@ export default function Finanzas() {
           </CardBody>
         </Card>
       </div>
+
+      {/* Runway y proyección con fijos */}
+      <Card className="mb-5">
+        <CardBody className="flex flex-wrap items-center gap-x-8 gap-y-3">
+          <div className="min-w-[150px]">
+            <p className="font-mono text-2xs font-medium uppercase tracking-[0.14em] text-subtle">Runway</p>
+            <p className="mt-1 font-display text-2xl tabular text-ink">
+              {proj.runway === Infinity ? '∞' : `${proj.runway.toFixed(1)} meses`}
+            </p>
+            <p className="mt-0.5 text-2xs text-subtle">
+              {proj.runway === Infinity ? 'tus fijos suman en positivo' : `líquido ${eur(proj.liquid)} / fijos ${signedEur(proj.fixedNet)}`}
+            </p>
+          </div>
+          <div className="h-10 w-px bg-line max-sm:hidden" />
+          <div className="flex flex-1 flex-wrap items-center gap-x-6 gap-y-1">
+            {proj.months.map((m) => (
+              <div key={m.label} className="text-[13px]">
+                <span className="font-mono text-2xs uppercase text-subtle">{m.label}</span>{' '}
+                <span className={cx('tabular font-semibold', m.acc >= 0 ? 'text-success' : 'text-danger')}>{signedEur(m.acc)}</span>
+              </div>
+            ))}
+            <span className="text-2xs text-subtle">proyección acumulada solo con tus fijos</span>
+          </div>
+        </CardBody>
+      </Card>
 
       {/* Patrimonio + impuestos + ahorro */}
       <div className="mb-5 grid grid-cols-1 gap-5 lg:grid-cols-12">

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, Target, Briefcase, Wallet, HeartPulse, Sparkles, Trash2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { ventureFilter, venturesOf } from '../lib/ventures'
+import { GOAL_METRICS, goalPct as goalPctLib, goalValue } from '../lib/goals'
 import { VentureChips } from '../components/app/VentureChips'
 import { useData } from '../context/DataContext'
 import { AREAS } from '../lib/data'
@@ -19,21 +20,19 @@ const AREA_META = {
 }
 const TYPE_LABEL = { percent: 'Porcentaje', numeric: 'Numérico', project: 'Proyecto' }
 
-function pctOf(g) {
-  if (g.type === 'percent') return Math.round(g.value)
-  if (g.invert) return clamp(Math.round((g.target / g.value) * 100), 0, 100)
-  return clamp(Math.round((g.value / Math.max(g.target, 1)) * 100), 0, 100)
-}
-function valueLabel(g) {
-  const fmt = (n) => Number(n).toLocaleString('es-ES')
-  if (g.type === 'percent') return `${fmt(g.value)}% de ${fmt(g.target)}%`
+function valueLabelOf(g, data) {
+  const fmt = (n) => Math.round(Number(n)).toLocaleString('es-ES')
+  if (g.type === 'percent' && !g.metric) return `${fmt(g.value)}% de ${fmt(g.target)}%`
   const u = g.unit || ''
-  return `${fmt(g.value)}${u} de ${fmt(g.target)}${u}`
+  return `${fmt(goalValue(g, data))}${u} de ${fmt(g.target)}${u}`
 }
 
 export default function Metas() {
   const { setUpgradeOpen, settings } = useApp()
-  const { goals: allGoals, remove, isPro } = useData()
+  const { goals: allGoals, remove, isPro, movements, workouts, savings, holdings } = useData()
+  const liveData = { movements, workouts, savings, holdings }
+  const pctOf = (g) => goalPctLib(g, liveData)
+  const valueLabel = (g) => valueLabelOf(g, liveData)
   const [vSel, setVSel] = useState('todos')
   const goals = ventureFilter(settings, allGoals, vSel)
   const [open, setOpen] = useState(false)
@@ -94,7 +93,7 @@ export default function Metas() {
                           <CardBody>
                             <div className="mb-3 flex items-start justify-between gap-2">
                               <h3 className="text-[15px] font-semibold leading-tight text-ink">{g.title}</h3>
-                              <Badge tone={complete ? 'success' : 'neutral'}>{TYPE_LABEL[g.type]}</Badge>
+                              <Badge tone={complete ? 'success' : g.metric ? 'accent' : 'neutral'}>{g.metric ? 'EN VIVO' : TYPE_LABEL[g.type]}</Badge>
                             </div>
                             <div className="flex items-center gap-4">
                               {settings.goalStyle !== 'numero' && (
@@ -137,6 +136,7 @@ export default function Metas() {
           { key: 'target', label: 'Objetivo', type: 'number', default: 100 },
           { key: 'unit', label: 'Unidad', type: 'text', placeholder: '€, kg, hitos…' },
           { key: 'venture', label: 'Venture', type: 'select', default: '', options: venturesOf(settings).map((v) => ({ value: v.id === 'personal' ? '' : v.id, label: `${v.icon} ${v.name}` })) },
+          { key: 'metric', label: 'Vincular a dato real', type: 'select', default: '', hint: 'el valor se actualiza solo', full: true, options: [{ value: '', label: '— manual —' }, ...GOAL_METRICS.map((m) => ({ value: m.id, label: m.name }))] },
         ]}
       />
       )}

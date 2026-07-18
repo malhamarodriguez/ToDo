@@ -35,6 +35,10 @@ alter table public.movements add column if not exists venture text default '';
 alter table public.tasks add column if not exists venture text default '';
 alter table public.notes add column if not exists venture text default '';
 alter table public.goals add column if not exists venture text default '';
+
+-- Segunda ola: ritmo de carrera y metas vinculadas a datos
+alter table public.workouts add column if not exists km numeric;
+alter table public.goals add column if not exists metric text default '';
 ```
 
 ### Activarte Pro a ti mismo (tu cuenta personal)

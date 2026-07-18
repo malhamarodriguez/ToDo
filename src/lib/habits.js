@@ -44,3 +44,10 @@ export const HABIT_COLORS = [
   '243 76% 64%', '158 64% 44%', '36 92% 55%', '342 80% 62%',
   '213 90% 58%', '262 72% 64%', '22 90% 56%', '188 78% 44%',
 ]
+
+// Fechas (ISO) en las que se completó un hábito — para el heatmap anual
+export function habitYearDates(log, habitId) {
+  return Object.entries(log || {})
+    .filter(([, ids]) => Array.isArray(ids) && ids.includes(habitId))
+    .map(([d]) => d)
+}

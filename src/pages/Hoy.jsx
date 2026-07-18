@@ -5,15 +5,12 @@ import { PageContainer } from '../components/layout/Page'
 import { Card, CardBody } from '../components/ui'
 import { moduleName } from '../lib/data'
 import { nextDeadline } from '../lib/fiscal'
-import { renderGreeting, longDate, capitalize, todayISO, taskToday, taskOverdue, clamp, cx } from '../lib/utils'
+import { renderGreeting, longDate, capitalize, todayISO, taskToday, taskOverdue, cx } from '../lib/utils'
+import { goalPct as goalPctLib } from '../lib/goals'
 
 // Vista "Hoy": aterrizaje minimalista. Máximo 4 tarjetas de 1-3 líneas
 // con su enlace — sin gráficos, sin tablas, sin números secundarios.
-function goalPct(g) {
-  if (g.type === 'percent') return Math.round(g.value)
-  if (g.invert) return clamp(Math.round((g.target / g.value) * 100), 0, 100)
-  return clamp(Math.round((g.value / Math.max(g.target, 1)) * 100), 0, 100)
-}
+
 
 function HoyCard({ icon: Icon, title, lines, to, toLabel, navigate, done }) {
   return (
@@ -43,7 +40,8 @@ function HoyCard({ icon: Icon, title, lines, to, toLabel, navigate, done }) {
 
 export default function Hoy() {
   const { settings, navigate } = useApp()
-  const { tasks, workouts, goals } = useData()
+  const { tasks, workouts, goals, movements, savings, holdings } = useData()
+  const goalPct = (g) => goalPctLib(g, { movements, workouts, savings, holdings })
 
   const visible = (id) => !(settings.modules || []).find((m) => m.id === id)?.hidden
   const nombre = (id) => moduleName(settings, id)
