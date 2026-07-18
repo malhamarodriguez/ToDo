@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext'
 import { useData } from '../../context/DataContext'
 import { COLOR_CHOICES } from '../../lib/data'
 import { cx } from '../../lib/utils'
-import { Modal, Button, Label, Input, Textarea, Select, Dot } from '../ui'
+import { Modal, Button, Label, Input, Textarea, Select, Switch, Dot } from '../ui'
 
 // Formulario genérico dirigido por configuración de campos.
 // fields: [{ key, label, type, options?, placeholder?, hint?, required?, full?, default? }]
@@ -17,7 +17,7 @@ export function RecordModal({ open, onClose, title, subtitle, table, fields, ini
     if (!open) return
     const base = {}
     fields.forEach((f) => {
-      base[f.key] = initial?.[f.key] ?? f.default ?? (f.type === 'number' ? '' : f.type === 'color' ? COLOR_CHOICES[0] : '')
+      base[f.key] = initial?.[f.key] ?? f.default ?? (f.type === 'number' ? '' : f.type === 'color' ? COLOR_CHOICES[0] : f.type === 'boolean' ? false : '')
     })
     setV(base)
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -34,6 +34,7 @@ export function RecordModal({ open, onClose, title, subtitle, table, fields, ini
       let val = v[f.key]
       if (f.type === 'number') val = val === '' ? 0 : Number(val)
       if (f.type === 'date' && (val === '' || val == null)) val = null
+      if (f.type === 'boolean') val = Boolean(val)
       payload[f.key] = val
     })
     setBusy(true)
@@ -81,6 +82,11 @@ export function RecordModal({ open, onClose, title, subtitle, table, fields, ini
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </Select>
+            ) : f.type === 'boolean' ? (
+              <div className="flex h-10 items-center justify-between rounded-lg border border-line bg-surface-2 px-3.5">
+                <span className="text-sm text-ink">{v[f.key] ? 'Sí' : 'No'}</span>
+                <Switch checked={Boolean(v[f.key])} onChange={() => set(f.key, !v[f.key])} />
+              </div>
             ) : f.type === 'textarea' ? (
               <Textarea placeholder={f.placeholder} value={v[f.key] ?? ''} onChange={(e) => set(f.key, e.target.value)} />
             ) : f.type === 'color' ? (

@@ -71,6 +71,7 @@ create table if not exists public.movements (
   date date,
   recurring boolean default false,
   kind text default 'out',
+  deductible boolean default false, -- gasto deducible (módulo Fiscal)
   created_at timestamptz default now()
 );
 

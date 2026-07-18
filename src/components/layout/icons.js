@@ -1,5 +1,6 @@
 import {
   Home,
+  Landmark,
   Briefcase,
   Wallet,
   Dumbbell,
@@ -19,6 +20,7 @@ import {
 
 export const ICONS = {
   Home,
+  Landmark,
   Briefcase,
   Wallet,
   Dumbbell,

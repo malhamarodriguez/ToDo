@@ -72,6 +72,7 @@ export const MODULES = [
   { id: 'metas', name: 'Metas', icon: 'Target' },
   { id: 'diario', name: 'Diario', icon: 'NotebookPen' },
   { id: 'calendario', name: 'Calendario', icon: 'Calendar' },
+  { id: 'fiscal', name: 'Fiscal', icon: 'Landmark' },
 ]
 
 // Nombre de módulo personalizado por el usuario ("Negocio" → "Estudios"…)
@@ -105,7 +106,7 @@ export const QUICK_ACTIONS = [
 
 // Iconos elegibles para los módulos (clic sobre el icono en Ajustes)
 export const ICON_CHOICES = [
-  'Home', 'Briefcase', 'Wallet', 'Dumbbell', 'Target', 'NotebookPen', 'Calendar',
+  'Home', 'Briefcase', 'Wallet', 'Dumbbell', 'Target', 'NotebookPen', 'Calendar', 'Landmark',
   'BookOpen', 'GraduationCap', 'Heart', 'Palette', 'Music', 'Plane', 'ShoppingBag', 'Coffee',
 ]
 

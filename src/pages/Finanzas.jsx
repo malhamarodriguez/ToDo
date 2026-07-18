@@ -38,6 +38,7 @@ const MODALS = {
       { key: 'category', label: 'Categoría', type: 'text', placeholder: 'Marketing, Software…' },
       { key: 'amount', label: 'Importe (€)', type: 'number', step: '0.01', hint: 'usa negativo para gastos' },
       { key: 'date', label: 'Fecha', type: 'date', default: todayISO() },
+      { key: 'deductible', label: 'Gasto deducible', type: 'boolean', hint: 'su IVA resta en el modelo 303' },
     ],
   },
   budget: {

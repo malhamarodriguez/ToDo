@@ -25,6 +25,10 @@ alter table public.events
 -- Plan del usuario (free | pro)
 alter table public.profiles
   add column if not exists plan text default 'free';
+
+-- Módulo Fiscal: gastos deducibles (si no lo ejecutaste ya)
+alter table public.movements
+  add column if not exists deductible boolean default false;
 ```
 
 ### Activarte Pro a ti mismo (tu cuenta personal)

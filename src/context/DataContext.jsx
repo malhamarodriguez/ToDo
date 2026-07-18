@@ -157,11 +157,17 @@ export function DataProvider({ children, demo = false }) {
         setBoth((d) => ({ ...d, [table]: [ins, ...d[table]] }))
         return ins
       }
-      const { data: ins, error } = await supabase
-        .from(table)
-        .insert({ ...row, user_id: user.id })
-        .select()
-        .single()
+      let payload = { ...row, user_id: user.id }
+      let { data: ins, error } = await supabase.from(table).insert(payload).select().single()
+      // Columna aún sin crear en la nube (SQL pendiente): reintenta sin ella.
+      const missing = error?.message?.match(/'([^']+)' column/)?.[1]
+      if (missing && missing in payload) {
+        delete payload[missing]
+        ;({ data: ins, error } = await supabase.from(table).insert(payload).select().single())
+        if (!error) {
+          app.toast({ type: 'warning', title: 'Guardado sin un campo', desc: `Ejecuta el SQL pendiente para activar "${missing}".` })
+        }
+      }
       if (error) {
         app.toast({ type: 'danger', title: 'No se pudo guardar', desc: error.message })
         return null

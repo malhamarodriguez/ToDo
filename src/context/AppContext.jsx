@@ -60,10 +60,21 @@ export const DEFAULT_SETTINGS = {
   financeCategories: [], // [{ name, color }]
   moduleViews: {}, // { negocio: 'lista', ... }
   lastBackupAt: null, // ISO de la última copia exportada
+  fiscal: {}, // módulo Fiscal: % IVA/IRPF, régimen, cuota, trimestres cerrados
 }
 
 // Migración de esquema: v1 (pre-presets) → v2. Nunca borra nada
 // que no entienda; los datos del usuario no se tocan.
+// Módulos nuevos del producto (p. ej. Fiscal) se añaden al final de la
+// lista guardada del usuario sin tocar su orden ni sus ocultos.
+function ensureModules(s) {
+  if (!Array.isArray(s.modules)) return s
+  const have = new Set(s.modules.map((m) => m.id))
+  const missing = MODULES.filter((m) => !have.has(m.id)).map((m) => ({ id: m.id, hidden: false }))
+  if (missing.length) s.modules = [...s.modules, ...missing]
+  return s
+}
+
 export function migrateSettings(raw) {
   if (!raw || typeof raw !== 'object') return {}
   const s = { ...raw }
@@ -75,7 +86,7 @@ export function migrateSettings(raw) {
     s.preset = 'electrico'
     s.schemaVersion = 2
   }
-  return s
+  return ensureModules(s)
 }
 
 function loadSettings() {
